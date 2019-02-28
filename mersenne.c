@@ -118,33 +118,39 @@ Bigint sub_big(Bigint a, Bigint b)
 	for (int i = 0; i < c.n; ++i)
 		c.digits[i] = 0;
 
-	// Perform basic subtraction, with some more efficient indexing
+	int carry = 0;
+
+	// Subtract bit by bit
 	for (int i = 0; i < b.n; ++i) {
-		int carry = 0;
-		int j;
-		for( j = i; j < a.n + i; j++ )
-		{
-			int val = c.digits[j] + (b.digits[i] * a.digits[j-i]) + carry;
-			carry       = val / 10;
-			c.digits[j] = val % 10;
-		}
-		if( carry > 0 )
-		{
-			int val = c.digits[j] + carry;
-			carry       = val / 10;
-			c.digits[j] = val % 10;
-		}
+
+		c.digits[i] = a.digits[i] - b.digits[i] + carry;
+
+		// Determine if underflow occurs
+		if (c.digits[i] < 0) {
+			carry = -1;
+			c.digits[i] += 10;
+		} else
+			carry = 0;
+
 	}
 
+	// deal with higher bits of a
+	if (a.n > b.n) {
 
+		// deal with higher bits of a
+		for (int i=b.n; i<a.n; ++i) {
 
-	// YOUR CODE HERE
-	// YOUR CODE HERE
-	// YOUR CODE HERE
-	// YOUR CODE HERE
-	// YOUR CODE HERE
-	// YOUR CODE HERE
-	// YOUR CODE HERE
+			c.digits[i] = a.digits[i] + carry;
+
+			// deal with underflow
+			if (c.digits[i]<0) {
+				carry = -1;
+				c.digits[i] += 10;
+			} else
+				carry = 0;
+
+		}
+	}
 
 	// Trim any leading zeros
 	compress(&c);
@@ -222,11 +228,15 @@ void shift_left(Bigint *a)
 	for (int i=0; i<a->n-1; ++i)
 		a->digits[i] = a->digits[i+1];
 
+
 	// Set highest digit to 0
 	a->digits[a->n-1] = 0;
 
 	// Set to new smaller size
 	--a->n;
+
+	// Trim any leading zeros
+	compress(a);
 }
 
 // Computes c = a % b
@@ -286,7 +296,9 @@ int LLT(int p)
 
 	// Mp = 2^p - 1
 	Bigint Mp = pow_big(two, p);
+	// print_big(Mp);
 	Mp =  sub_big(Mp, one);
+	// print_big(Mp);
 
 	// s = 4
 	Bigint s = digit_to_big(4);
@@ -318,11 +330,110 @@ int is_small_prime(int p)
 	return 1;
 }
 
+// Test the function digit_to_big
+void Test_digit_to_big() {
+	printf("Generate 3\n");
+	Bigint three = digit_to_big(3);
+	print_big(three);
+
+	printf("Generate 117\n");
+	Bigint oneoneseven = digit_to_big(117);
+	print_big(oneoneseven);
+}
+
+// Test the function mult_big
+void Test_mult_big(int a, int b) {
+	printf("%d*%d=%d\n", a, b, a*b);
+	Bigint big_a = digit_to_big(a);
+	Bigint big_b = digit_to_big(b);
+	Bigint big_c = mult_big(big_a, big_b);
+	print_big(big_c);
+}
+
+// Test the function sub_big
+void Test_sub_big(int a, int b) {
+	printf("%d-%d=%d\n", a, b, a-b);
+	Bigint big_a = digit_to_big(a);
+	Bigint big_b = digit_to_big(b);
+	Bigint big_c = sub_big(big_a, big_b);
+	print_big(big_c);
+}
+
+// my power function
+int my_pow(int a, int p) {
+
+	int ret = 1;
+
+	for (int i=0; i<p; ++i)
+		ret *= a;
+
+	return ret;
+}
+
+// Test the function pow_big
+void Test_pow_big(int a, int p) {
+	printf("%d^%d=%d\n", a, p, my_pow(a,p));
+	Bigint big_a = digit_to_big(a);
+	Bigint big_b = pow_big(big_a, p);
+	print_big(big_b);
+}
+
+
+// my compare function
+int my_compare(int a, int b) {
+	if (a>b)
+		return 1;
+	if (a==b)
+		return 0;
+
+	return -1;
+}
+
+// Test the function compare_big
+void Test_compare_big(int a, int b) {
+	printf("my_compare:  %d,%d=%d\n", a, b, my_compare(a,b));
+	Bigint big_a = digit_to_big(a);
+	Bigint big_b = digit_to_big(b);
+	printf("compare_big: %d,%d=%d\n", a, b, compare_big(big_a, big_b));
+}
+
+// Test shift_right
+void Test_shift_right(int a) {
+	printf("shr %d=%d\n", a, a*10);
+	Bigint big_a = digit_to_big(a);
+	shift_right(&big_a);
+	print_big(big_a);
+}
+
+// Test shift_left
+void Test_shift_left() {
+	Bigint five = digit_to_big(5);
+	Bigint twofive = mult_big(five, five);
+	Bigint big_a = mult_big(five, twofive);
+	print_big(big_a);
+	shift_left(&big_a);
+	printf("shl\n");
+	print_big(big_a);
+}
+
+// Test shift_left
+void Test_mod_big() {
+	Bigint five = digit_to_big(5);
+	Bigint four = digit_to_big(4);
+	Bigint twofive = mult_big(five, five);
+	Bigint big_a = mult_big(five, twofive);
+	Bigint mod_a = mod_big(big_a, four);
+	print_big(mod_a);
+}
+
+
+
+
 // Scan through to p = 550, checking for prime Mp's along the way
 int main(void)
 {
 	// Test all p values, 2 to 550
-	for( int p = 2; p < 550; p++ )
+	for( int p = 2; p < 130; p++ )
 	{
 		// Only test Mp for primacy if p itself is also prime
 		if( is_small_prime(p) )

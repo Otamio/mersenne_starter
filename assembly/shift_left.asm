@@ -86,7 +86,7 @@ loop_c:
   move $t0, $s7               # $t0 = i
   sll $t0, $t0, 2             # $t0 = 4*$s7 = 4i
   sub $t0, $0, $t0            # $t0 = -4i (correct addressing)
-  add $t0, $s6, $t0           # $t0 = &a.digits[i]
+  add $t0, $s6, $t0           # $t0 = &a->digits[i]
   lw $t1, 0($t0)              # load a->digits[i] into $t1
   bne $t1, $0, exit_c         # branch if (a->digits[i] != 0)
 

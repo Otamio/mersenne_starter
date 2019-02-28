@@ -174,25 +174,23 @@ Bigint pow_big(Bigint a, int p )
 // returns -1 if a < b
 // returns 0 if a == b
 // returns 1 if a > b
-int compare_big(Bigint a, Bigint b)
-{
+int compare_big(Bigint a, Bigint b) {
 	// if a has fewer digits than b, its definitely smaller
-	if( a.n < b.n )
+	if (a.n < b.n)
 		return -1;
 
 	// if a has more digits than b, its definitely larger
-	if( a.n > b.n )
+	if (a.n > b.n)
 		return 1;
 
 	// otherwise, if they have the same number of digits
 	// we have to scan through them and check. We compare
 	// in descending order, as we want to look at the highest
 	// value digits first.
-	for( int i = a.n - 1; i >= 0; i-- )
-	{
-		if(      a.digits[i] > b.digits[i] )
+	for (int i = a.n-1; i>=0; --i) {
+		if (a.digits[i] > b.digits[i])
 			return 1;
-		else if( a.digits[i] < b.digits[i] )
+		else if (a.digits[i] < b.digits[i])
 			return -1;
 	}
 

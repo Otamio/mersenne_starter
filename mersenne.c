@@ -322,10 +322,9 @@ int LLT(int p)
 // are primes themselves, as Mp = 2^p - 1 will not be prime if
 // p is not also prime.
 // Returns 1 if p is prime, 0 otherwise
-int is_small_prime(int p)
-{
-	for( int i = 2; i < p-1; i++ )
-		if( p % i == 0 )
+int is_small_prime(int p) {
+	for (int i=2; i<p-1; ++i)
+		if (p%i == 0)
 			return 0;
 	return 1;
 }

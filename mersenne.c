@@ -55,9 +55,8 @@ Bigint digit_to_big(int a)
 // Prints out the big integer to stdout. Descending
 // order is used as we have stored the big integer
 // in little endian format.
-void print_big(Bigint b)
-{
-	for( int c = b.n -1; c >= 0; c--)
+void print_big(Bigint b) {
+	for (int c = b.n-1; c>=0; --c)
 		printf("%d", b.digits[c]);
 	printf("\n");
 }

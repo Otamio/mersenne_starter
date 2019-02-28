@@ -96,7 +96,7 @@ Bigint mult_big(Bigint a, Bigint b)
 			c.digits[j] = val % 10;
 		}
 	}
-	
+
 	// Trim any leading zeros
 	compress(&c);
 
@@ -110,6 +110,34 @@ Bigint mult_big(Bigint a, Bigint b)
 Bigint sub_big(Bigint a, Bigint b)
 {
 	Bigint c;
+
+	// c can have at most the number of digits in a (because a >= b)
+	c.n = a.n;
+
+	// Initialze all digits in c to zero
+	for (int i = 0; i < c.n; ++i)
+		c.digits[i] = 0;
+
+	// Perform basic subtraction, with some more efficient indexing
+	for (int i = 0; i < b.n; ++i) {
+		int carry = 0;
+		int j;
+		for( j = i; j < a.n + i; j++ )
+		{
+			int val = c.digits[j] + (b.digits[i] * a.digits[j-i]) + carry;
+			carry       = val / 10;
+			c.digits[j] = val % 10;
+		}
+		if( carry > 0 )
+		{
+			int val = c.digits[j] + carry;
+			carry       = val / 10;
+			c.digits[j] = val % 10;
+		}
+	}
+
+
+
 	// YOUR CODE HERE
 	// YOUR CODE HERE
 	// YOUR CODE HERE
@@ -117,6 +145,10 @@ Bigint sub_big(Bigint a, Bigint b)
 	// YOUR CODE HERE
 	// YOUR CODE HERE
 	// YOUR CODE HERE
+
+	// Trim any leading zeros
+	compress(&c);
+
 	return c;
 }
 
@@ -144,7 +176,7 @@ int compare_big(Bigint a, Bigint b)
 	// if a has fewer digits than b, its definitely smaller
 	if( a.n < b.n )
 		return -1;
-	
+
 	// if a has more digits than b, its definitely larger
 	if( a.n > b.n )
 		return 1;
@@ -168,7 +200,7 @@ int compare_big(Bigint a, Bigint b)
 // Multiplies by 10
 // Since we hvae stored our big int value in digit-wise form,
 // we only need to shift our integer array to the right once.
-void shift_right(Bigint * a )
+void shift_right(Bigint *a)
 {
 	// Copy stuff
 	for( int i = a->n; i > 0; i-- )
@@ -184,15 +216,17 @@ void shift_right(Bigint * a )
 // Divides by 10
 // Since we hvae stored our big int value in digit-wise form,
 // we only need to shift our integer array to the left once.
-void shift_left(Bigint * a )
+void shift_left(Bigint *a)
 {
-	// YOUR CODE HERE
-	// YOUR CODE HERE
-	// YOUR CODE HERE
-	// YOUR CODE HERE
-	// YOUR CODE HERE
-	// YOUR CODE HERE
-	// YOUR CODE HERE
+	// Copy stuff
+	for (int i=0; i<a->n-1; ++i)
+		a->digits[i] = a->digits[i+1];
+
+	// Set highest digit to 0
+	a->digits[a->n-1] = 0;
+
+	// Set to new smaller size
+	--a->n;
 }
 
 // Computes c = a % b
@@ -217,7 +251,7 @@ Bigint mod_big(Bigint a, Bigint b)
 	Bigint original_b = b;
 
 	// Keep multiplying the denominator (b) by 10 until it is larger than the numerator (a)
-	while( compare_big(a, b) == 1 ) // tests if a > b 
+	while( compare_big(a, b) == 1 ) // tests if a > b
 		shift_right(&b);
 
 	// We went too far, so divide once by 10
@@ -225,7 +259,7 @@ Bigint mod_big(Bigint a, Bigint b)
 
 	// At this point, we have the largest possible multiple of the denominator
 	// without being larger than the numerator.
-	
+
 	// Keep reducing size of denominator by factor of 10 until it equals its original size
 	while( compare_big(b,original_b) != -1 ) // tests if b >= original_b
 	{
@@ -253,7 +287,7 @@ int LLT(int p)
 	// Mp = 2^p - 1
 	Bigint Mp = pow_big(two, p);
 	Mp =  sub_big(Mp, one);
- 
+
 	// s = 4
 	Bigint s = digit_to_big(4);
 

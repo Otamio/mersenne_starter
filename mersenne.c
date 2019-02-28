@@ -29,11 +29,9 @@ typedef struct{
 // arithmetic operation outputs big integers of the correct size,
 // but that involves adding some additional logic, and we want to
 // keep our functions as simple as possible when converting to assembly.
-void compress(Bigint * a)
-{
-	for( int i = a->n - 1; i >= 0; i-- )
-	{
-		if( a->digits[i] == 0 && i != 0 )
+void compress(Bigint *a) {
+	for (int i = a->n - 1; i > 0; --i) {
+		if (a->digits[i] == 0)
 			a->n -= 1;
 		else
 			return;

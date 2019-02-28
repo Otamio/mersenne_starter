@@ -25,7 +25,7 @@ function_b:
 # loop init
   lw $s7, 0($s0)
   addi $s7, $s7, -1           # $s7 = c (b.n-1)
-  addi $s6, $s0, 4           # $s6 = &b.digits[]
+  addi $s6, $s0, 4            # $s6 = &b.digits[]
   blt $s7, $0, exit_b         # branch if c<0
 loop_b:
   move $t0, $s7

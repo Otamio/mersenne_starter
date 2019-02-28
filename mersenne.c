@@ -218,12 +218,10 @@ void shift_right(Bigint *a) {
 // Divides by 10
 // Since we hvae stored our big int value in digit-wise form,
 // we only need to shift our integer array to the left once.
-void shift_left(Bigint *a)
-{
+void shift_left(Bigint *a) {
 	// Copy stuff
 	for (int i=0; i<a->n-1; ++i)
 		a->digits[i] = a->digits[i+1];
-
 
 	// Set highest digit to 0
 	a->digits[a->n-1] = 0;

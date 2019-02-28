@@ -28,11 +28,12 @@ function_c:
 # loop init
   lw $s7, 0($s0)
   addi $s7, $s7, -1           # $s7 = i (a->n-1)
-  addi $s6, $s0, 4            # $s6 = &(a->digits[])
+  addi $s6, $s0, -4           # $s6 = &(a->digits[])
   ble $s7, $0, exit_c         # branch if i<=0
 loop_c:
-  move $t0, $s7
+  move $t0, $s7               # $t0 = i
   sll $t0, $t0, 2             # $t0 = 4*$s7 = 4i
+  sub $t0, $0, $t0            # $t0 = -4i (correct addressing)
   add $t0, $s6, $t0           # $t0 = &a.digits[i]
   lw $t1, 0($t0)              # load a->digits[i] into $t1
   bne $t1, $0, exit_c         # branch if (a->digits[i] != 0)
@@ -69,25 +70,35 @@ main:
   li $v0, 4                   # load print string syscall code
   syscall
 
-# create Bigint
-  addi $sp, $sp, -20          # 4 size, and 4 digits
-  li $t1, 0                   # first digit is 0
-  sw $t1, 16($sp)
-  li $t1, 0                   # second digit is 0
-  sw $t1, 12($sp)
-  li $t1, 0                   # third digit is 0
-  sw $t1, 8($sp)
-  li $t1, 3
-  sw $t1, 4($sp)              # last digit is 3
-  li $t1, 4
-  sw $t1, 0($sp)              # Bigint size is 4
+# create Bigint (351 words in size)
+  addi $sp, $sp, -1404        # 1 size, and 3 digits
+  li $t0, 1400
+  add $t0, $t0, $sp           # $t0 is the iterator
+loop_create:
+  blt $t0, $sp, exit_create   # if $t0>$sp, then exit loop
+  sw $0, 0($t0)               # initialize to 0
+  addi $t0, $t0, -4           # iterate the the next element
+  j loop_create
 
+exit_create:
+  li $t1, 4
+  sw $t1, 1400($sp)           # Bigint size is 4
+
+  li $t1, 3
+  sw $t1, 1396($sp)           # last digit is 3
+  li $t1, 0
+  sw $t1, 1392($sp)           # third digit is 0
+  li $t1, 0
+  sw $t1, 1388($sp)           # second digit is 0
+  li $t1, 0
+  sw $t1, 1384($sp)           # first digit is 0
 
 # call compress
-  move $a0, $sp
+  addi $s0, $sp, 1400         # $s0 is the starting pointer
+  move $a0, $s0
   jal function_c
 
-  lw $a0, 0($sp)              # get new size
+  lw $a0, 0($s0)              # get new size
   li $v0, 1                   # load print syscall code
   syscall                     # print result
 
@@ -96,7 +107,7 @@ main:
   syscall
 
 # reclaim stack memory
-  addi $sp, $sp, 20
+  addi $sp, $sp, 1404
 
 # exit
   li $v0, 10                  # load exit syscall code

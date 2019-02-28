@@ -203,10 +203,9 @@ int compare_big(Bigint a, Bigint b)
 // Multiplies by 10
 // Since we hvae stored our big int value in digit-wise form,
 // we only need to shift our integer array to the right once.
-void shift_right(Bigint *a)
-{
+void shift_right(Bigint *a) {
 	// Copy stuff
-	for( int i = a->n; i > 0; i-- )
+	for (int i = a->n; i>0; --i)
 		a->digits[i] = a->digits[i-1];
 
 	// Set lowest digit to 0

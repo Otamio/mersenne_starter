@@ -231,12 +231,11 @@ Bigint sub_big(Bigint a, Bigint b){
 
 // Computes b = a^p
 // Works by multiplying 'a' by itself p-1 times
-Bigint pow_big(Bigint a, int p )
-{
+Bigint pow_big(Bigint a, int p) {
 	Bigint b = a;
 
 	// Just multiply by itself p-1 times
-	for( int i = 1; i < p; i++ )
+	for (int i = 1; i < p; ++i)
 		b = mult_big(b, a);
 
 	return b;

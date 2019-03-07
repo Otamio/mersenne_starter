@@ -1,40 +1,173 @@
-# shift_left.asm
-# Bigint mult_big(Bigint a, Bigint b) {
-# 	Bigint c;
-# 	c.n = a.n + b.n;
-# 	for (int i=0; i < c.n; ++i)
-# 		c.digits[i] = 0;
-# 	for (int i=0; i < b.n; ++i) {
-# 		int carry = 0;
-# 		int j;
-#
-# 		for (j=i; j < a.n+i; ++j) {
-# 			int val = c.digits[j] + (b.digits[i] * a.digits[j-i]) + carry;
-# 			carry       = val / 10;
-# 			c.digits[j] = val % 10;
-# 		}
-#
-# 		if (carry > 0) {
-# 			int val = c.digits[j] + carry;
-# 			carry       = val / 10;
-# 			c.digits[j] = val % 10;
-# 		}
-# 	}
-# 	compress(&c);
-# 	return c;
+# pow_big.asm
+# Bigint pow_big(Bigint a, int p) {
+# 	Bigint b = a;
+# 	for (int i = 1; i < p; ++i)
+# 		b = mult_big(b, a);
+# 	return b;
 # }
-
   .data
-test_g:   .asciiz "Multiplication Tests"
+test_h:   .asciiz "Power Tests"
 newline:  .asciiz "\n"
 .align 2
 bigint1:  .space  1404
 .align 2
 bigint2:  .space  1404
 .align 2
-bigint3:  .space  1404
+bigint9:  .space  1404
 
   .text
+pow_big:
+# save state
+  addi $sp, $sp, -36          # 8 elements are pushed onto the stack
+  sw $s0, 32($sp)
+  sw $s1, 28($sp)
+  sw $s2, 24($sp)
+  sw $s3, 20($sp)
+  sw $s4, 16($sp)
+  sw $s5, 12($sp)
+  sw $s6, 8($sp)
+  sw $s7, 4($sp)
+  sw $ra, 0($sp)
+
+# read parameters
+  move $s0, $a0               # $s0 is the starting address of a
+  move $s1, $a1               # $s1 is integer p
+  move $s2, $a2               # $s2 is the starting address of b
+
+# initialize b (by calling copy_bigint)
+# save state
+  addi $sp, $sp, -16          # 4 elements are pushed onto the stack
+  sw $a0, 12($sp)
+  sw $a1, 8($sp)
+  sw $a2, 4($sp)
+  sw $a3, 0($sp)
+
+# call copy_bigint
+  move $a0, $s0
+  move $a1, $s2
+  jal copy_bigint
+
+# restore state
+  lw $a0, 12($sp)
+  lw $a1, 8($sp)
+  lw $a2, 4($sp)
+  lw $a3, 0($sp)
+  addi $sp, $sp, 16
+
+# initialize t (by calling init_bigint)
+# save state
+  addi $sp, $sp, -16          # 4 elements are pushed onto the stack
+  sw $a0, 12($sp)
+  sw $a1, 8($sp)
+  sw $a2, 4($sp)
+  sw $a3, 0($sp)
+
+# call init_bigint
+  la $t9, bigint9
+  move $a0, $t9
+  jal init_bigint
+
+# restore state
+  lw $a0, 12($sp)
+  lw $a1, 8($sp)
+  lw $a2, 4($sp)
+  lw $a3, 0($sp)
+  addi $sp, $sp, 16
+
+# prepare for loop
+  addi $s3, $s0, 4            # $s3 = &(a.digits[])
+  addi $s4, $s2, 4            # $s4 = &(b.digits[])
+  li $s7, 1                   # $s7 = 1 (i)
+
+POW_loop:
+  bge $s7, $s1, POW_return    # branch to exit if i >= p
+
+# call mult_big (and copy c to b)
+# save state
+  addi $sp, $sp, -20          # 4 elements are pushed onto the stack
+  sw $a0, 16($sp)
+  sw $a1, 12($sp)
+  sw $a2, 8($sp)
+  sw $a3, 4($sp)
+  sw $t9, 0($sp)
+
+# call mult_big
+  move $a0, $s0
+  move $a1, $s2
+  move $a2, $t9               # $t9 gets initialized in this call (no worry of garbage)
+  jal mult_big
+
+# call copy_bigint
+  move $a0, $t9
+  move $a1, $s2
+  jal copy_bigint
+
+# restore state
+  lw $a0, 16($sp)
+  lw $a1, 12($sp)
+  lw $a2, 8($sp)
+  lw $a3, 4($sp)
+  lw $t9, 0($sp)
+  addi $sp, $sp, 20
+
+  addi $s7, $s7, 1           # increment i
+  j POW_loop
+
+POW_return:
+# add return value
+  move $v0, $s0
+
+# recover state
+  lw $s0, 32($sp)
+  lw $s1, 28($sp)
+  lw $s2, 24($sp)
+  lw $s3, 20($sp)
+  lw $s4, 16($sp)
+  lw $s5, 12($sp)
+  lw $s6, 8($sp)
+  lw $s7, 4($sp)
+  lw $ra, 0($sp)
+  addi $sp, $sp, 36           # 8 elements are popped from the stack
+
+# return
+  jr $ra
+
+
+
+# This function copies the data from one bigint to the other
+# copy bigint
+copy_bigint:
+# save state
+  addi $sp, $sp, -36          # 8 elements are pushed onto the stack
+  sw $s0, 32($sp)
+  sw $s1, 28($sp)
+  sw $s2, 24($sp)
+  sw $s3, 20($sp)
+  sw $s4, 16($sp)
+  sw $s5, 12($sp)
+  sw $s6, 8($sp)
+  sw $s7, 4($sp)
+  sw $ra, 0($sp)
+
+# prepare loop
+  move $s0, $a0                 # s0 is the starting address of a
+  addi $s1, $s0, 1400           # s1 is the (word) address of the last element
+  move $s2, $a1                 # s2 is the starting address of b
+
+copy_loop:
+  bgt $s0, $s1, copy_exit       # if $s0 > $s1, branch to exit
+  lw $s7, 0($s0)                # load a[i]
+  sw $s7, 0($s2)                # save a[i]
+  addi $s0, $s0, 4
+  addi $s2, $s2, 4
+  j copy_loop
+
+copy_exit:
+# return (no return value)
+  jr $ra
+
+
+
 mult_big:
 # save state
   addi $sp, $sp, -36          # 8 elements are pushed onto the stack
@@ -186,7 +319,6 @@ MUL_return:
 # return
   jr $ra
 
-
 print_big:
 # save state
   addi $sp, $sp, -36          # 8 elements are pushed onto the stack
@@ -315,143 +447,39 @@ init_exit:
   jr $ra
 
 
-
 # test driver
 main:
 # print test notification
-  la $a0, test_g
+  la $a0, test_h
   li $v0, 4
-	syscall
+  syscall
 
   la $a0, newline             # load linefeed into $a0 for printing
   li $v0, 4                   # load print string syscall code
   syscall
 
-# test case 1 (3 and 7)
+# test case 1 (3^4)
 
 # init bigint1
   la $a0, bigint1            # $a0 is the starting address of bigint1
   jal init_bigint            # initialize bigint 1
 
-# load bigint1
+# load bigint
   li $t1, 1
   sw $t1, 0($a0)            # Bigint size is 1
 
   li $t1, 3
   sw $t1, 4($a0)            # the digit is 3
 
-# init bigint 2
-  la $a0, bigint2           # $a0 is the starting address of bigint2
-  jal init_bigint           # initialize bigint2
-
-# load bigint2
-  li $t1, 1
-  sw $t1, 0($a0)            # Bigint size is 1
-
-  li $t1, 7
-  sw $t1, 4($a0)            # the digit is 7
-
-# call mult_big
-  la $a0, bigint1
-  la $a1, bigint2
-  la $a2, bigint3
-  jal mult_big
-
-# print output
-  move $a0, $v0
-  jal print_big
-
-# test case 2 (30 and 42)
-# init bigint1
-  la $a0, bigint1            # $a0 is the starting address of bigint1
+# init bigint2
+  la $a0, bigint2            # $a0 is the starting address of bigint1
   jal init_bigint            # initialize bigint 1
 
-# load bigint1
-  li $t1, 2
-  sw $t1, 0($a0)            # Bigint size is 2
-
-  li $t1, 3
-  sw $t1, 8($a0)            # first digit is 3
-  li $t1, 0
-  sw $t1, 4($a0)            # second digit is 0
-
-# init bigint 2
-  la $a0, bigint2           # $a0 is the starting address of bigint2
-  jal init_bigint           # initialize bigint2
-
-# load bigint 2
-  li $t1, 2
-  sw $t1, 0($a0)            # Bigint size is 2
-
-  li $t1, 4
-  sw $t1, 8($a0)            # first digit is 4
-  li $t1, 2
-  sw $t1, 4($a0)            # second digit is 2
-
-# call mult_big
+# call pow_big
   la $a0, bigint1
-  la $a1, bigint2
-  la $a2, bigint3
-  jal mult_big
-
-# print output
-  move $a0, $v0
-  jal print_big
-
-# test case 3 (10,000,000 and 9,000,000)
-# init bigint1
-  la $a0, bigint1            # $a0 is the starting address of bigint1
-  jal init_bigint            # initialize bigint 1
-
-# load bigint1
-  li $t1, 8
-  sw $t1, 0($a0)            # Bigint size is 8
-
-  li $t1, 1
-  sw $t1, 32($a0)           # first digit is 1
-  li $t1, 0
-  sw $t1, 28($a0)           # second digit is 0
-  li $t1, 0
-  sw $t1, 24($a0)           # 3rd digit is 0
-  li $t1, 0
-  sw $t1, 20($a0)           # 4th digit is 0
-  li $t1, 0
-  sw $t1, 16($a0)           # 5th digit is 0
-  li $t1, 0
-  sw $t1, 12($a0)           # 6th digit is 0
-  li $t1, 0
-  sw $t1, 8($a0)            # 7th digit is 0
-  li $t1, 0
-  sw $t1, 4($a0)            # 8th digit is 0
-
-# init bigint 2
-  la $a0, bigint2           # $a0 is the starting address of bigint2
-  jal init_bigint           # initialize bigint2
-
-# load bigint 2
-  li $t1, 7
-  sw $t1, 0($a0)            # Bigint size is 7
-
-  li $t1, 9
-  sw $t1, 28($a0)           # first digit is 0
-  li $t1, 0
-  sw $t1, 24($a0)           # second digit is 0
-  li $t1, 0
-  sw $t1, 20($a0)           # 3rd digit is 0
-  li $t1, 0
-  sw $t1, 16($a0)           # 4th digit is 0
-  li $t1, 0
-  sw $t1, 12($a0)           # 5th digit is 0
-  li $t1, 0
-  sw $t1, 8($a0)            # 6th digit is 0
-  li $t1, 0
-  sw $t1, 4($a0)            # 7th digit is 0
-
-# call mult_big
-  la $a0, bigint1
-  la $a1, bigint2
-  la $a2, bigint3
-  jal mult_big
+  li $a1, 1
+  la $a2, bigint2
+  jal pow_big
 
 # print output
   move $a0, $v0

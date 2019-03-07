@@ -64,30 +64,28 @@ void print_big(Bigint b) {
 // https://silentmatt.com/blog/2011/10/how-bigintegers-work-part-2-multiplication/
 // which has javascript source code available here:
 // https://github.com/silentmatt/javascript-biginteger/blob/master/biginteger.js
-Bigint mult_big(Bigint a, Bigint b)
-{
+Bigint mult_big(Bigint a, Bigint b) {
 	Bigint c;
 
 	// c can have (at most) the number of digits in a and b, added
 	c.n = a.n + b.n;
 
 	// Initialze all digits in c to zero
-	for( int i = 0; i < c.n; i++ )
+	for (int i=0; i < c.n; ++i)
 		c.digits[i] = 0;
 
 	// Perform basic multiplication, with some more efficient indexing
-	for( int i = 0; i < b.n; i++ )
-	{
+	for (int i=0; i < b.n; ++i) {
 		int carry = 0;
 		int j;
-		for( j = i; j < a.n + i; j++ )
-		{
+
+		for (j=i; j < a.n+i; ++j) {
 			int val = c.digits[j] + (b.digits[i] * a.digits[j-i]) + carry;
 			carry       = val / 10;
 			c.digits[j] = val % 10;
 		}
-		if( carry > 0 )
-		{
+
+		if (carry > 0) {
 			int val = c.digits[j] + carry;
 			carry       = val / 10;
 			c.digits[j] = val % 10;
@@ -104,55 +102,131 @@ Bigint mult_big(Bigint a, Bigint b)
 // Simple elementary subtraction. Be sure that
 // the return value (c) has been compressed so it
 // is appropriately sized
-Bigint sub_big(Bigint a, Bigint b)
-{
-	Bigint c;
+// Bigint sub_big(Bigint a, Bigint b)
+// {
+// 	Bigint c;
+//
+// 	// c can have at most the number of digits in a (because a >= b)
+// 	c.n = a.n;
+//
+// 	// Initialze all digits in c to zero
+// 	for (int i = 0; i < c.n; ++i)
+// 		c.digits[i] = 0;
+//
+// 	int carry = 0;
+//
+// 	// Subtract bit by bit
+// 	for (int i = 0; i < b.n; ++i) {
+//
+// 		c.digits[i] = a.digits[i] - b.digits[i] + carry;
+//
+// 		// Determine if underflow occurs
+// 		if (c.digits[i] < 0) {
+// 			carry = -1;
+// 			c.digits[i] += 10;
+// 		} else
+// 			carry = 0;
+//
+// 	}
+//
+// 	// deal with higher bits of a
+// 	if (a.n > b.n) {
+//
+// 		// deal with higher bits of a
+// 		for (int i=b.n; i<a.n; ++i) {
+//
+// 			c.digits[i] = a.digits[i] + carry;
+//
+// 			// deal with underflow
+// 			if (c.digits[i]<0) {
+// 				carry = -1;
+// 				c.digits[i] += 10;
+// 			} else
+// 				carry = 0;
+//
+// 		}
+// 	}
+//
+// 	// Trim any leading zeros
+// 	compress(&c);
+//
+// 	return c;
+// }
 
-	// c can have at most the number of digits in a (because a >= b)
-	c.n = a.n;
+// Bigint sub_big(Bigint a, Bigint b){
+//
+//     // create struct c
+//     Bigint c;
+//
+//     c.n = a.n;
+//
+//     // Initialize all digits in c to zero
+//     for( int i = 0; i < c.n; i++ )
+//         c.digits[i] = 0;
+//
+//     // perform basic subtraction, with some more efficient indexing
+//     for( int i = 0; i < a.n; i++ ){
+//
+//         int carry = 0;
+//
+// 				if (i >= b.n)
+// 					b.digits[i] = 0;
+//
+//         //if a digit is less that b digit, we need to carry from next number
+//         if (a.digits[i] <  b.digits[i]){
+//
+// 					carry = 10;
+//
+//             if (i != (a.n - 1)){
+//               a.digits[i+1] -= 1;
+//             }
+//         }
+//
+//         //if the next number is not the end of the range, we decrement.
+//         c.digits[i] = (a.digits[i] - b.digits[i]) + (carry);
+//
+// 				// printf("i: %d, %d %d %d\n", i, a.digits[i], b.digits[i], c.digits[i]);
+//
+//     }
+//
+//     compress(&c);
+//     return c;
+// }
 
-	// Initialze all digits in c to zero
-	for (int i = 0; i < c.n; ++i)
-		c.digits[i] = 0;
+Bigint sub_big(Bigint a, Bigint b){
 
-	int carry = 0;
+    // create struct c
+    Bigint c;
 
-	// Subtract bit by bit
-	for (int i = 0; i < b.n; ++i) {
+    c.n = a.n;
 
-		c.digits[i] = a.digits[i] - b.digits[i] + carry;
+    // Initialize all digits in c to zero
+    for( int i = 0; i < c.n; i++ )
+        c.digits[i] = 0;
 
-		// Determine if underflow occurs
-		if (c.digits[i] < 0) {
-			carry = -1;
-			c.digits[i] += 10;
-		} else
-			carry = 0;
+    // perform basic subtraction, with some more efficient indexing
+    for( int i = 0; i < a.n; i++ ){
 
-	}
+        int carry = 0;
 
-	// deal with higher bits of a
-	if (a.n > b.n) {
+				if (i>=b.n)
+					b.digits[i] = 0;
 
-		// deal with higher bits of a
-		for (int i=b.n; i<a.n; ++i) {
 
-			c.digits[i] = a.digits[i] + carry;
+        //if a digit is less that b digit, we need to carry from next number
+        if (a.digits[i] <  b.digits[i]){
 
-			// deal with underflow
-			if (c.digits[i]<0) {
-				carry = -1;
-				c.digits[i] += 10;
-			} else
-				carry = 0;
+            carry = 10;
 
-		}
-	}
-
-	// Trim any leading zeros
-	compress(&c);
-
-	return c;
+            if (i != (a.n - 1)){
+                a.digits[i+1] -= 1;
+            }
+        }
+        //if the next number is not the end of the range, we decrement.
+        c.digits[i] = (a.digits[i] - b.digits[i]) + (carry);
+    }
+    compress(&c);
+    return c;
 }
 
 // Computes b = a^p
@@ -295,13 +369,22 @@ int LLT(int p)
 	// s = 4
 	Bigint s = digit_to_big(4);
 
+	// printf("Test start\n");
+	// print_big(Mp);
+	// printf("Starts\n");
+
 	for( int i = 0; i < p - 2; i++ )
 	{
 		// s = ((s × s) − 2) mod Mp
 		s = mult_big(s, s);
+		// print_big(s);
 		s = sub_big(s, two);
+		// print_big(s);
 		s = mod_big(s, Mp);
+		// print_big(s);
 	}
+
+	// printf("Test ends\n");
 
 	if( compare_big(s, zero) == 0 ) // check if s == 0
 		return 1; // PRIME
@@ -343,11 +426,18 @@ void Test_mult_big(int a, int b) {
 
 // Test the function sub_big
 void Test_sub_big(int a, int b) {
-	printf("%d-%d=%d\n", a, b, a-b);
-	Bigint big_a = digit_to_big(a);
-	Bigint big_b = digit_to_big(b);
-	Bigint big_c = sub_big(big_a, big_b);
-	print_big(big_c);
+	// printf("%d-%d=%d\n", a, b, a-b);
+	// Bigint big_a = digit_to_big(a);
+	// Bigint big_b = digit_to_big(b);
+	// Bigint big_c = sub_big(big_a, big_b);
+	// print_big(big_c);
+	Bigint two = digit_to_big(2);
+	Bigint five = digit_to_big(5);
+	Bigint ten = mult_big(two, five);
+	Bigint hundred = mult_big(ten, ten);
+	Bigint fifteen = mult_big(five, digit_to_big(3));
+	Bigint eight_five = sub_big(hundred, fifteen);
+	print_big(eight_five);
 }
 
 // my power function
@@ -424,7 +514,8 @@ void Test_mod_big() {
 int main(void)
 {
 	// Test all p values, 2 to 550
-	for( int p = 2; p < 130; p++ )
+
+	for( int p = 3; p < 130; p++ )
 	{
 		// Only test Mp for primacy if p itself is also prime
 		if( is_small_prime(p) )
@@ -450,6 +541,8 @@ int main(void)
 
 		}
 	}
+
+	// Test_sub_big(100,11);
 
 	return 0;
 }

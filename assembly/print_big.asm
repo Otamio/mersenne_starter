@@ -8,7 +8,7 @@
   .data
 newline:  .asciiz "\n"
 .align 2
-bigint1:  .space  20
+bigint1:  .space  1404
   .text
 print_big:
 # save state
@@ -71,7 +71,7 @@ PG_return:
 # store bigint
 init_bigint:
   move $t0, $a0                # t0 is the address of the first element (n)
-  addi $t1, $t0, 20            # t1 is the address of the last element
+  addi $t1, $t0, 1400          # t1 is the (word) address of the last element
 
 init_loop:
   bgt $t0, $t1, init_exit      # if $t0 > $t1, branch to exit

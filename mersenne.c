@@ -102,56 +102,57 @@ Bigint mult_big(Bigint a, Bigint b) {
 // Simple elementary subtraction. Be sure that
 // the return value (c) has been compressed so it
 // is appropriately sized
-// Bigint sub_big(Bigint a, Bigint b)
-// {
-// 	Bigint c;
-//
-// 	// c can have at most the number of digits in a (because a >= b)
-// 	c.n = a.n;
-//
-// 	// Initialze all digits in c to zero
-// 	for (int i = 0; i < c.n; ++i)
-// 		c.digits[i] = 0;
-//
-// 	int carry = 0;
-//
-// 	// Subtract bit by bit
-// 	for (int i = 0; i < b.n; ++i) {
-//
-// 		c.digits[i] = a.digits[i] - b.digits[i] + carry;
-//
-// 		// Determine if underflow occurs
-// 		if (c.digits[i] < 0) {
-// 			carry = -1;
-// 			c.digits[i] += 10;
-// 		} else
-// 			carry = 0;
-//
-// 	}
-//
-// 	// deal with higher bits of a
-// 	if (a.n > b.n) {
-//
-// 		// deal with higher bits of a
-// 		for (int i=b.n; i<a.n; ++i) {
-//
-// 			c.digits[i] = a.digits[i] + carry;
-//
-// 			// deal with underflow
-// 			if (c.digits[i]<0) {
-// 				carry = -1;
-// 				c.digits[i] += 10;
-// 			} else
-// 				carry = 0;
-//
-// 		}
-// 	}
-//
-// 	// Trim any leading zeros
-// 	compress(&c);
-//
-// 	return c;
-// }
+Bigint sub_big(Bigint a, Bigint b)
+{
+	Bigint c;
+
+	// c can have at most the number of digits in a (because a >= b)
+	c.n = a.n;
+
+	// Initialze all digits in c to zero
+	for (int i = 0; i < c.n; ++i)
+		c.digits[i] = 0;
+
+	int carry = 0;
+
+	// Subtract bit by bit
+	for (int i = 0; i < b.n; ++i) {
+
+		c.digits[i] = a.digits[i] - b.digits[i] + carry;
+
+		// Determine if underflow occurs
+		if (c.digits[i] < 0) {
+			carry = -1;
+			c.digits[i] += 10;
+		} else
+			carry = 0;
+
+	}
+
+	// deal with higher bits of a
+	if (a.n > b.n) {
+
+		// deal with higher bits of a
+		for (int i=b.n; i<a.n; ++i) {
+
+			c.digits[i] = a.digits[i] + carry;
+
+			// deal with underflow
+			if (c.digits[i]<0) {
+				carry = -1;
+				c.digits[i] += 10;
+			} else
+				carry = 0;
+
+		}
+	}
+
+
+	// Trim any leading zeros
+	compress(&c);
+
+	return c;
+}
 
 // Bigint sub_big(Bigint a, Bigint b){
 //
@@ -193,41 +194,41 @@ Bigint mult_big(Bigint a, Bigint b) {
 //     return c;
 // }
 
-Bigint sub_big(Bigint a, Bigint b){
-
-    // create struct c
-    Bigint c;
-
-    c.n = a.n;
-
-    // Initialize all digits in c to zero
-    for( int i = 0; i < c.n; i++ )
-        c.digits[i] = 0;
-
-    // perform basic subtraction, with some more efficient indexing
-    for( int i = 0; i < a.n; i++ ){
-
-        int carry = 0;
-
-				if (i>=b.n)
-					b.digits[i] = 0;
-
-
-        //if a digit is less that b digit, we need to carry from next number
-        if (a.digits[i] <  b.digits[i]){
-
-            carry = 10;
-
-            if (i != (a.n - 1)){
-                a.digits[i+1] -= 1;
-            }
-        }
-        //if the next number is not the end of the range, we decrement.
-        c.digits[i] = (a.digits[i] - b.digits[i]) + (carry);
-    }
-    compress(&c);
-    return c;
-}
+// Bigint sub_big(Bigint a, Bigint b){
+//
+//     // create struct c
+//     Bigint c;
+//
+//     c.n = a.n;
+//
+//     // Initialize all digits in c to zero
+//     for( int i = 0; i < c.n; i++ )
+//         c.digits[i] = 0;
+//
+//     // perform basic subtraction, with some more efficient indexing
+//     for( int i = 0; i < a.n; i++ ){
+//
+//         int carry = 0;
+//
+// 				if (i>=b.n)
+// 					b.digits[i] = 0;
+//
+//
+//         //if a digit is less that b digit, we need to carry from next number
+//         if (a.digits[i] <  b.digits[i]){
+//
+//             carry = 10;
+//
+//             if (i != (a.n - 1)){
+//                 a.digits[i+1] -= 1;
+//             }
+//         }
+//         //if the next number is not the end of the range, we decrement.
+//         c.digits[i] = (a.digits[i] - b.digits[i]) + (carry);
+//     }
+//     compress(&c);
+//     return c;
+// }
 
 // Computes b = a^p
 // Works by multiplying 'a' by itself p-1 times

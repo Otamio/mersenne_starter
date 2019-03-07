@@ -1,11 +1,11 @@
-  # is_small_prime.asm
-  # code segment
-  # int is_small_prime(int p) {
-  # 	for (int i=2; i<p-1; ++i)
-  # 		if (p%i == 0)
-  # 			return 0;
-  # 	return 1;
-  # }
+# is_small_prime.asm
+# % code segment
+# int is_small_prime(int p) {
+# 	for (int i=2; i<p-1; ++i)
+# 		if (p%i == 0)
+# 			return 0;
+# 	return 1;
+# }
   .data
 test_a:  .asciiz "Small Prime Tests"
 newline: .asciiz "\n"

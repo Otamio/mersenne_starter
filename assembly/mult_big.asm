@@ -115,9 +115,7 @@ MUL_loop_in:
   lw $t5, 0($t4)              # $t5 = c.digits[j], $t4 = &(c.digits[j])
   add $t8, $t8, $t5           # $t8 = b.digits[i] * a.digits[j-i] + c.digits[j]
 
-  add $t8, $t8, $t3          # $t8 = b.digits[i] * a.digits[j-i] + c.digits[j] + carry
-
-
+  add $t8, $t8, $t3           # $t8 = b.digits[i] * a.digits[j-i] + c.digits[j] + carry
 
 # val div (mod) 10
   li $t5, 10                  # $t5 = 10
@@ -127,13 +125,16 @@ MUL_loop_in:
   sw $t5, 0($t4)              # c.digits[j] = val % 10
 
 # increment j and go to next iteration
-  addi $s6, $s6, 1            # $s6 += 1
+  addi $s6, $s6, 1            # $j += 1
   j MUL_loop_in
 
 MUL_iend:
   ble $t3, $0, MUL_iloop_end  # branch if $t3 (carry) <= 0
 
-  add $t8, $t5, $t3           # (optimized) val = c.digits[j] + carry
+  sll $t4, $s6, 2             # $t4 = 4j
+  add $t4, $s5, $t4          # $t4 = &(c.digits[j])
+  lw $t5, 0($t4)              # $t5 = c.digits[j]
+  add $t8, $t5, $t3           # val = c.digits[j] + carry
 
   li $t5, 10                  # $t5 = 10
   div $t8, $t5
@@ -348,7 +349,103 @@ main:
   sw $t1, 0($a0)            # Bigint size is 1
 
   li $t1, 7
-  sw $t1, 8($a0)            # the digit is 7
+  sw $t1, 4($a0)            # the digit is 7
+
+# call mult_big
+  la $a0, bigint1
+  la $a1, bigint2
+  la $a2, bigint3
+  jal mult_big
+
+# print output
+  move $a0, $v0
+  jal print_big
+
+# test case 2 (30 and 42)
+# init bigint1
+  la $a0, bigint1            # $a0 is the starting address of bigint1
+  jal init_bigint            # initialize bigint 1
+
+# load bigint1
+  li $t1, 2
+  sw $t1, 0($a0)            # Bigint size is 2
+
+  li $t1, 3
+  sw $t1, 8($a0)            # first digit is 3
+  li $t1, 0
+  sw $t1, 4($a0)            # second digit is 0
+
+# init bigint 2
+  la $a0, bigint2           # $a0 is the starting address of bigint2
+  jal init_bigint           # initialize bigint2
+
+# load bigint 2
+  li $t1, 2
+  sw $t1, 0($a0)            # Bigint size is 2
+
+  li $t1, 4
+  sw $t1, 8($a0)            # first digit is 4
+  li $t1, 2
+  sw $t1, 4($a0)            # second digit is 2
+
+# call mult_big
+  la $a0, bigint1
+  la $a1, bigint2
+  la $a2, bigint3
+  jal mult_big
+
+# print output
+  move $a0, $v0
+  jal print_big
+
+# test case 3 (10,000,000 and 9,000,000)
+# init bigint1
+  la $a0, bigint1            # $a0 is the starting address of bigint1
+  jal init_bigint            # initialize bigint 1
+
+# load bigint1
+  li $t1, 8
+  sw $t1, 0($a0)            # Bigint size is 8
+
+  li $t1, 1
+  sw $t1, 32($a0)           # first digit is 1
+  li $t1, 0
+  sw $t1, 28($a0)           # second digit is 0
+  li $t1, 0
+  sw $t1, 24($a0)           # 3rd digit is 0
+  li $t1, 0
+  sw $t1, 20($a0)           # 4th digit is 0
+  li $t1, 0
+  sw $t1, 16($a0)           # 5th digit is 0
+  li $t1, 0
+  sw $t1, 12($a0)           # 6th digit is 0
+  li $t1, 0
+  sw $t1, 8($a0)            # 7th digit is 0
+  li $t1, 0
+  sw $t1, 4($a0)            # 8th digit is 0
+
+# init bigint 2
+  la $a0, bigint2           # $a0 is the starting address of bigint2
+  jal init_bigint           # initialize bigint2
+
+# load bigint 2
+  li $t1, 7
+  sw $t1, 0($a0)            # Bigint size is 7
+
+  li $t1, 9
+  sw $t1, 28($a0)           # first digit is 0
+  li $t1, 0
+  sw $t1, 24($a0)           # second digit is 0
+  li $t1, 0
+  sw $t1, 20($a0)           # 3rd digit is 0
+  li $t1, 0
+  sw $t1, 16($a0)           # 4th digit is 0
+  li $t1, 0
+  sw $t1, 12($a0)           # 5th digit is 0
+  li $t1, 0
+  sw $t1, 8($a0)            # 6th digit is 0
+  li $t1, 0
+  sw $t1, 4($a0)            # 7th digit is 0
 
 # call mult_big
   la $a0, bigint1

@@ -94,12 +94,12 @@ main:
   li $t1, 3
   sw $t1, 0($a0)           # Bigint size is 3
 
-  li $t1, 3
-  sw $t1, 4($a0)           # third digit is 1
-  li $t1, 2
-  sw $t1, 8($a0)           # second digit is 2
   li $t1, 1
   sw $t1, 12($a0)          # first digit is 3
+  li $t1, 2
+  sw $t1, 8($a0)           # second digit is 2
+  li $t1, 3
+  sw $t1, 4($a0)           # third digit is 1
 
 # call print_big
   jal print_big

@@ -321,13 +321,12 @@ void shift_left(Bigint *a) {
  * but this one can be done in only a few lines of code while remaining efficient enough for
  * our purposes.
  */
-Bigint mod_big(Bigint a, Bigint b)
-{
+Bigint mod_big(Bigint a, Bigint b) {
 	// Store original denominator for use later
 	Bigint original_b = b;
 
 	// Keep multiplying the denominator (b) by 10 until it is larger than the numerator (a)
-	while( compare_big(a, b) == 1 ) // tests if a > b
+	while (compare_big(a, b) == 1) // tests if a > b
 		shift_right(&b);
 
 	// We went too far, so divide once by 10
@@ -337,10 +336,10 @@ Bigint mod_big(Bigint a, Bigint b)
 	// without being larger than the numerator.
 
 	// Keep reducing size of denominator by factor of 10 until it equals its original size
-	while( compare_big(b,original_b) != -1 ) // tests if b >= original_b
+	while (compare_big(b,original_b) != -1) // tests if b >= original_b
 	{
 		// Keep subtracting off denominator from numerator (A)
-		while( compare_big(a,b) != -1 ) // tests if a >= b
+		while (compare_big(a,b) != -1) // tests if a >= b
 			a = sub_big(a,b);
 
 		// Once we've gone as far as we can go, reduce size of denominator

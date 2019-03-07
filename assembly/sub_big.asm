@@ -99,21 +99,21 @@ SUB_loop1:
   bge $s6, $t9, SUB_loop1_end # branch if i>=b.n
 
   sll $t1, $s6, 2             # $t1 = 4i
-  add $t2, $t1, $s0           # $t2 = &(a.digits[i])
+  add $t2, $t1, $s3           # $t2 = &(a.digits[i])
   lw $t8, 0($t2)              # $t8 = a.digits[i]
 
-  add $t2, $t1, $s1           # $t2 = &(b.digits[i])
+  add $t2, $t1, $s4           # $t2 = &(b.digits[i])
   lw $t2, 0($t2)              # $t2 = b.digits[i]
   sub $t8, $t8, $t2           # $t8 = a.digits[i] - b.digits[i]
 
   add $t8, $t8, $s7           # $t8 = a.digits[i] - b.digits[i] + carry
 
-  add $t2, $t1, $s2           # $t2 = &(c.digits[i])
+  add $t2, $t1, $s5           # $t2 = &(c.digits[i])
 
   sw $t8, 0($t2)              # c.digits[i] = $t8
 
 # if statement to check underflow
-  bge $t8, $0, SUB_loop1_if   # branch if c.digits[i] >= 0 (optimized)
+  blt $t8, $0, SUB_loop1_if   # branch if c.digits[i] <= 0 (optimized)
 # if no
   li $s7, 0                   # carry = 0
   j SUB_loop1_if_end
@@ -142,16 +142,16 @@ SUB_if_loop:
   bge $s6, $t8, SUB_if_end    # branch if i>= a.n
 
   sll $t1, $s6, 2             # $t1 = 4i
-  add $t2, $t1, $s0           # $t2 = &(a.digits[i])
+  add $t2, $t1, $s3           # $t2 = &(a.digits[i])
   lw $t7, 0($t2)              # $t7 = a.digits[i]
 
-  addi $t7, $t7, $s7          # $t7 = a.digits[i] + carry
+  add $t7, $t7, $s7           # $t7 = a.digits[i] + carry
 
-  add $t2, $t1, $s2           # $t2 = &(c.digits[i])
+  add $t2, $t1, $s5           # $t2 = &(c.digits[i])
   sw $t7, 0($t2)              # c.digits[i] = a.digits[i] + carry
 
 SUB_if_if:
-  bge $t7, $0, SUB_if_if_t    # branch if $t7 >= 0
+  blt $t7, $0, SUB_if_if_t    # branch if $t7 < 0
   li $s7, 0                   # carry = 0
   j SUB_if_if_end
 
@@ -321,7 +321,7 @@ PG_return:
 # test driver
 main:
 # print test notification
-  la $a0, test_g
+  la $a0, test_i
   li $v0, 4
 	syscall
 
@@ -352,6 +352,108 @@ main:
 
   li $t1, 3
   sw $t1, 4($a0)            # the digit is 3
+
+# call sub_big
+  la $a0, bigint1
+  la $a1, bigint2
+  la $a2, bigint3
+  jal sub_big
+
+# print output
+  move $a0, $v0
+  jal print_big
+
+# test case 2 (42 and 12)
+
+# init bigint1
+  la $a0, bigint1            # $a0 is the starting address of bigint1
+  jal init_bigint            # initialize bigint 1
+
+# load bigint1
+  li $t1, 2
+  sw $t1, 0($a0)            # Bigint size is 2
+
+  li $t1, 4
+  sw $t1, 8($a0)            # first digit is 4
+  li $t1, 2
+  sw $t1, 4($a0)            # second digit is 2
+
+# init bigint 2
+  la $a0, bigint2           # $a0 is the starting address of bigint2
+  jal init_bigint           # initialize bigint2
+
+# load bigint2
+  li $t1, 2
+  sw $t1, 0($a0)            # Bigint size is 2
+
+  li $t1, 1
+  sw $t1, 8($a0)            # first digit is 1
+  li $t1, 2
+  sw $t1, 4($a0)            # second digit is 2
+
+# call sub_big
+  la $a0, bigint1
+  la $a1, bigint2
+  la $a2, bigint3
+  jal sub_big
+
+# print output
+  move $a0, $v0
+  jal print_big
+
+# test case 3 (9,000,000,000 and 7,654,321)
+
+# init bigint1
+  la $a0, bigint1            # $a0 is the starting address of bigint1
+  jal init_bigint            # initialize bigint 1
+
+# load bigint1
+  li $t1, 10
+  sw $t1, 0($a0)            # Bigint size is 10
+
+  li $t1, 9
+  sw $t1, 40($a0)            # 1st digit is 9
+  li $t1, 0
+  sw $t1, 36($a0)            # 2nd digit is 0
+  li $t1, 0
+  sw $t1, 32($a0)            # 3rd digit is 0
+  li $t1, 0
+  sw $t1, 28($a0)            # 4th digit is 0
+  li $t1, 0
+  sw $t1, 24($a0)            # 5th digit is 0
+  li $t1, 0
+  sw $t1, 20($a0)            # 6th digit is 0
+  li $t1, 0
+  sw $t1, 16($a0)            # 7th digit is 0
+  li $t1, 0
+  sw $t1, 12($a0)            # 8th digit is 0
+  li $t1, 0
+  sw $t1, 8($a0)             # 9th digit is 0
+  li $t1, 0
+  sw $t1, 4($a0)             # 10th digit is 0
+
+# init bigint 2
+  la $a0, bigint2           # $a0 is the starting address of bigint2
+  jal init_bigint           # initialize bigint2
+
+# load bigint2
+  li $t1, 7
+  sw $t1, 0($a0)             # Bigint size is 7
+
+  li $t1, 7
+  sw $t1, 28($a0)            # 1st digit is 7
+  li $t1, 6
+  sw $t1, 24($a0)            # 2nd digit is 6
+  li $t1, 5
+  sw $t1, 20($a0)            # 3rd digit is 5
+  li $t1, 4
+  sw $t1, 16($a0)            # 4th digit is 4
+  li $t1, 3
+  sw $t1, 12($a0)            # 5th digit is 3
+  li $t1, 2
+  sw $t1, 8($a0)             # 6th digit is 2
+  li $t1, 1
+  sw $t1, 4($a0)             # 7th digit is 1
 
 # call sub_big
   la $a0, bigint1

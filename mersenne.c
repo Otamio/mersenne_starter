@@ -352,8 +352,7 @@ Bigint mod_big(Bigint a, Bigint b) {
 // The Lucas–Lehmer primality test (LLT) algorithm
 // Tests if Mp = 2^p - 1 is a prime number
 // Returns 1 if Mp is prime, 0 otherwise
-int LLT(int p)
-{
+int LLT(int p) {
 	// Some values we'll use
 	Bigint zero = digit_to_big(0);
 	Bigint one  = digit_to_big(1);
@@ -372,8 +371,7 @@ int LLT(int p)
 	// print_big(Mp);
 	// printf("Starts\n");
 
-	for( int i = 0; i < p - 2; i++ )
-	{
+	for (int i = 0; i < p - 2; ++i) {
 		// s = ((s × s) − 2) mod Mp
 		s = mult_big(s, s);
 		// print_big(s);
@@ -385,7 +383,7 @@ int LLT(int p)
 
 	// printf("Test ends\n");
 
-	if( compare_big(s, zero) == 0 ) // check if s == 0
+	if (compare_big(s, zero) == 0) // check if s == 0
 		return 1; // PRIME
 	else
 		return 0; // NOT_PRIME

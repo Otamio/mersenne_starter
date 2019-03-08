@@ -152,7 +152,6 @@ MOD_loop1_end:
   move $a0, $s1
   jal shift_left
 
-
 # restore state
   lw $t9, 16($sp)
   lw $a0, 12($sp)
@@ -236,12 +235,13 @@ MOD_loop2_in:
   jal sub_big
 
 # restore state
+  lw $t0, 20($sp)
   lw $t9, 16($sp)
   lw $a0, 12($sp)
   lw $a1, 8($sp)
   lw $a2, 4($sp)
   lw $a3, 0($sp)
-  addi $sp, $sp, 20
+  addi $sp, $sp, 24
 
 # call copy_big
 # save state
@@ -259,12 +259,13 @@ MOD_loop2_in:
   jal copy_bigint
 
 # restore state
+  lw $t0, 20($sp)
   lw $t9, 16($sp)
   lw $a0, 12($sp)
   lw $a1, 8($sp)
   lw $a2, 4($sp)
   lw $a3, 0($sp)
-  addi $sp, $sp, 20
+  addi $sp, $sp, 24
 
   j MOD_loop2_in
 
@@ -284,12 +285,13 @@ MOD_loop2_in_end:
   jal shift_left
 
 # restore state
+  lw $t0, 20($sp)
   lw $t9, 16($sp)
   lw $a0, 12($sp)
   lw $a1, 8($sp)
   lw $a2, 4($sp)
   lw $a3, 0($sp)
-  addi $sp, $sp, 20
+  addi $sp, $sp, 24
 
   j MOD_loop2
 
@@ -867,6 +869,109 @@ main:
 # print output
   move $a0, $v0
   jal print_big
+
+# test case 2 (48 and 12)
+
+# init bigint1
+  la $a0, bigint1            # $a0 is the starting address of bigint1
+  jal init_bigint            # initialize bigint 1
+
+# load bigint1
+  li $t1, 2
+  sw $t1, 0($a0)            # Bigint size is 2
+
+  li $t1, 4
+  sw $t1, 8($a0)            # first digit is 4
+  li $t1, 8
+  sw $t1, 4($a0)            # second digit is 8
+
+# init bigint 2
+  la $a0, bigint2           # $a0 is the starting address of bigint2
+  jal init_bigint           # initialize bigint2
+
+# load bigint2
+  li $t1, 2
+  sw $t1, 0($a0)            # Bigint size is 2
+
+  li $t1, 1
+  sw $t1, 8($a0)            # first digit is 1
+  li $t1, 2
+  sw $t1, 4($a0)            # second digit is 2
+
+# call mod_big
+  la $a0, bigint1
+  la $a1, bigint2
+  la $a2, bigint3
+  jal mod_big
+
+# print output
+  move $a0, $v0
+  jal print_big
+
+# test case 3 (9,000,000,000 and 7,654,321)
+
+# init bigint1
+  la $a0, bigint1            # $a0 is the starting address of bigint1
+  jal init_bigint            # initialize bigint 1
+
+# load bigint1
+  li $t1, 10
+  sw $t1, 0($a0)            # Bigint size is 10
+
+  li $t1, 9
+  sw $t1, 40($a0)            # 1st digit is 9
+  li $t1, 0
+  sw $t1, 36($a0)            # 2nd digit is 0
+  li $t1, 0
+  sw $t1, 32($a0)            # 3rd digit is 0
+  li $t1, 0
+  sw $t1, 28($a0)            # 4th digit is 0
+  li $t1, 0
+  sw $t1, 24($a0)            # 5th digit is 0
+  li $t1, 0
+  sw $t1, 20($a0)            # 6th digit is 0
+  li $t1, 0
+  sw $t1, 16($a0)            # 7th digit is 0
+  li $t1, 0
+  sw $t1, 12($a0)            # 8th digit is 0
+  li $t1, 0
+  sw $t1, 8($a0)             # 9th digit is 0
+  li $t1, 0
+  sw $t1, 4($a0)             # 10th digit is 0
+
+# init bigint 2
+  la $a0, bigint2           # $a0 is the starting address of bigint2
+  jal init_bigint           # initialize bigint2
+
+# load bigint2
+  li $t1, 7
+  sw $t1, 0($a0)             # Bigint size is 7
+
+  li $t1, 7
+  sw $t1, 28($a0)            # 1st digit is 7
+  li $t1, 6
+  sw $t1, 24($a0)            # 2nd digit is 6
+  li $t1, 5
+  sw $t1, 20($a0)            # 3rd digit is 5
+  li $t1, 4
+  sw $t1, 16($a0)            # 4th digit is 4
+  li $t1, 3
+  sw $t1, 12($a0)            # 5th digit is 3
+  li $t1, 2
+  sw $t1, 8($a0)             # 6th digit is 2
+  li $t1, 1
+  sw $t1, 4($a0)             # 7th digit is 1
+
+# call mod_big
+  la $a0, bigint1
+  la $a1, bigint2
+  la $a2, bigint3
+  jal mod_big
+
+# print output
+  move $a0, $v0
+  jal print_big
+
 
 # exit (from main)
   li $v0, 10                 # load exit syscall code

@@ -508,22 +508,18 @@ void Test_mod_big() {
 
 
 // Scan through to p = 550, checking for prime Mp's along the way
-int main(void)
-{
+int main(void) {
 	// Test all p values, 2 to 550
 
-	for( int p = 3; p < 130; p++ )
-	{
+	for (int p = 3; p <= 128; ++p) {
 		// Only test Mp for primacy if p itself is also prime
-		if( is_small_prime(p) )
-		{
+		if (is_small_prime(p)) {
 			printf("Testing p = %d ", p);
 
 			// Run LLT test of Mp
 			int is_prime = LLT(p);
 
-			if(is_prime)
-			{
+			if (is_prime) {
 				printf("found prime Mp = ");
 				Bigint one  = digit_to_big(1);
 				Bigint two  = digit_to_big(2);

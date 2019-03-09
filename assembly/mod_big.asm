@@ -973,6 +973,55 @@ main:
   jal print_big
 
 
+# test case 4 (37634 and 2047)
+
+# init bigint1
+  la $a0, bigint1            # $a0 is the starting address of bigint1
+  jal init_bigint            # initialize bigint 1
+
+# load bigint1
+  li $t1, 5
+  sw $t1, 0($a0)            # Bigint size is 10
+
+  li $t1, 3
+  sw $t1, 20($a0)            # 6th digit is 0
+  li $t1, 7
+  sw $t1, 16($a0)            # 7th digit is 0
+  li $t1, 6
+  sw $t1, 12($a0)            # 8th digit is 0
+  li $t1, 3
+  sw $t1, 8($a0)             # 9th digit is 0
+  li $t1, 4
+  sw $t1, 4($a0)             # 10th digit is 0
+
+# init bigint 2
+  la $a0, bigint2           # $a0 is the starting address of bigint2
+  jal init_bigint           # initialize bigint2
+
+# load bigint2
+  li $t1, 4
+  sw $t1, 0($a0)             # Bigint size is 7
+
+  li $t1, 2
+  sw $t1, 16($a0)            # 4th digit is 4
+  li $t1, 0
+  sw $t1, 12($a0)            # 5th digit is 3
+  li $t1, 4
+  sw $t1, 8($a0)             # 6th digit is 2
+  li $t1, 7
+  sw $t1, 4($a0)             # 7th digit is 1
+
+# call mod_big
+  la $a0, bigint1
+  la $a1, bigint2
+  la $a2, bigint3
+  jal mod_big
+
+# print output
+  move $a0, $v0
+  jal print_big
+
+
 # exit (from main)
   li $v0, 10                 # load exit syscall code
   syscall                    # exit

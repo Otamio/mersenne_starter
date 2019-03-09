@@ -48,6 +48,8 @@ bigint14:  .space 1404
 # stores s
 .align 2
 bigint15: .space  1404
+.align 2
+bigint18: .space 1404
 # stores tmp in LLT
 .align 2
 bigint19:  .space 1404
@@ -67,6 +69,49 @@ LLT:
   sw $ra, 0($sp)
 
 ########################################
+### initialize temporary variables
+########################################
+
+# initialize tmps
+# save state
+  addi $sp, $sp, -16          # 4 elements are pushed onto the stack
+  sw $a0, 12($sp)
+  sw $a1, 8($sp)
+  sw $a2, 4($sp)
+  sw $a3, 0($sp)
+
+# call init_bigint
+  la $a0, bigint18
+  jal init_bigint
+
+# restore state
+  lw $a0, 12($sp)
+  lw $a1, 8($sp)
+  lw $a2, 4($sp)
+  lw $a3, 0($sp)
+  addi $sp, $sp, 16
+
+# initialize tmps
+# save state
+  addi $sp, $sp, -16          # 4 elements are pushed onto the stack
+  sw $a0, 12($sp)
+  sw $a1, 8($sp)
+  sw $a2, 4($sp)
+  sw $a3, 0($sp)
+
+# call init_bigint
+  la $a0, bigint19
+  jal init_bigint
+
+# restore state
+  lw $a0, 12($sp)
+  lw $a1, 8($sp)
+  lw $a2, 4($sp)
+  lw $a3, 0($sp)
+  addi $sp, $sp, 16
+
+########################################
+### int LLT(int p) {}
 ### ------------------------------------
 ### p := $s0
 ########################################
@@ -82,6 +127,7 @@ LLT:
 
 # load address
   la $s7, bigint11            # $s7 stores the starting address of bigint10
+  la $s4, bigint18            # store a copy of Mp
 
 # save state
   addi $sp, $sp, -16          # 4 elements are pushed onto the stack
@@ -103,9 +149,9 @@ LLT:
 
 # fill value
   li $t0, 1
-  lw $t0, 0($s7)              # size of "0" is 1
+  sw $t0, 0($s7)              # size of "0" is 1
   li $t0, 0
-  lw $t0, 4($s7)              # the digit of "0" is 0
+  sw $t0, 4($s7)              # the digit of "0" is 0
 
 ########################################
 ### Bigint one  = digit_to_big(1);
@@ -136,9 +182,9 @@ LLT:
 
 # fill value
   li $t0, 1
-  lw $t0, 0($s6)              # size of "1" is 1
+  sw $t0, 0($s6)              # size of "1" is 1
   li $t0, 1
-  lw $t0, 4($s6)              # the digit of "1" is 1
+  sw $t0, 4($s6)              # the digit of "1" is 1
 
 ########################################
 ### Bigint two  = digit_to_big(2);
@@ -169,9 +215,9 @@ LLT:
 
 # fill value
   li $t0, 1
-  lw $t0, 0($s5)              # size of "2" is 1
+  sw $t0, 0($s5)              # size of "2" is 1
   li $t0, 2
-  lw $t0, 4($s5)              # the digit of "2" is 2
+  sw $t0, 4($s5)              # the digit of "2" is 2
 
 ########################################
 ### Bigint Mp = pow_big(two, p);
@@ -242,8 +288,9 @@ LLT:
 
 # call sub_big
   move $a0, $s1               # arg1: Mp
-  move $a1, $s6               # arg2: 1
+  move $a1, $s6               # arg2: 1 (bigint)
   la $a2, bigint19            # arg3: tmp
+  jal sub_big
 
 # restore state
   lw $a0, 12($sp)
@@ -301,9 +348,9 @@ LLT:
 
 # fill value
   li $t0, 1
-  lw $t0, 0($s2)              # size of "4" is 1
+  sw $t0, 0($s2)              # size of "4" is 1
   li $t0, 4
-  lw $t0, 4($s2)              # the digit of "4" is 4
+  sw $t0, 4($s2)              # the digit of "4" is 4
 
 ########################################
 ### for (int i = 0; i < p - 2; ++i) {}
@@ -313,11 +360,11 @@ LLT:
 ########################################
 
 # loop initialization
-  li $s2, 0                   # $s2 is i (0)
+  li $s3, 0                   # $s3 is i (0)
   addi $t9, $s0, -2           # $t9 = p-2
 
 LLT_loop:
-  bge $s2, $t9, LLT_loop_exit # branch if i >= p-2
+  bge $s3, $t9, LLT_loop_exit # branch if i >= p-2
 
 ########################################
 ### s = mult_big(s, s);
@@ -336,8 +383,8 @@ LLT_loop:
   sw $a3, 0($sp)
 
 # call mult_big
-  move $a0, $s4
-  move $a1, $s4
+  move $a0, $s2
+  move $a1, $s2
   la $a2, bigint19            # initialize $s4 (bigint22)
   jal mult_big
 
@@ -430,10 +477,35 @@ LLT_loop:
 ### s = mod_big(s, Mp);
 ### ------------------------------------
 ### s := $s2
-### Mp := $s1
+### Mp := $s1, $s4 (copy)
 ########################################
 
 ### call modulus #######################
+
+### create a copy of $s1 (Mp) ##########
+
+# save state
+  addi $sp, $sp, -20          # 4 elements are pushed onto the stack
+  sw $t9, 16($sp)
+  sw $a0, 12($sp)
+  sw $a1, 8($sp)
+  sw $a2, 4($sp)
+  sw $a3, 0($sp)
+
+# call copy_bigint
+  move $a0, $s1
+  move $a1, $s4
+  jal copy_bigint
+
+# restore state
+  lw $t9, 16($sp)
+  lw $a0, 12($sp)
+  lw $a1, 8($sp)
+  lw $a2, 4($sp)
+  lw $a3, 0($sp)
+  addi $sp, $sp, 20
+
+### Call mod_big ##########
 
 # save state
   addi $sp, $sp, -20          # 4 elements are pushed onto the stack
@@ -445,9 +517,9 @@ LLT_loop:
 
 # call mod_big
   move $a0, $s2
-  move $a1, $s1
+  move $a1, $s4
   la $a2, bigint19            # initialize $s4 (bigint22)
-  jal sub_big
+  jal mod_big
 
 # restore state
   lw $t9, 16($sp)
@@ -1666,6 +1738,24 @@ main:
   jal LLT
 
 # get return value and print
+  move $a0, $v0
+  li $v0, 1                   # load print syscall code
+  syscall                     # print result
+
+  la $a0, newline             # load linefeed into $a0 for printing
+  li $v0, 4                   # load print string syscall code
+  syscall
+
+#################################
+### Test p=67 for Mp primacy
+#################################
+
+  # test case 2 (67)
+
+  li $a0, 5
+  jal LLT
+
+  # get return value and print
   move $a0, $v0
   li $v0, 1                   # load print syscall code
   syscall                     # print result

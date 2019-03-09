@@ -90,12 +90,40 @@ MERSENNE_SCAN:
 ### p := $s0
 ########################################
 
-  li $s0, 0   # p = $s0, START = 3
+  li $s0, 3   # p = $s0, START = 3
   li $s7, 128 # UPBOUND = 128
 
 SCAN_LOOP:
 
   bgt $s0, $s7, SCAN_EXIT     # branch to EXIT when p > 128
+
+########################################
+### if (is_small_prime(p)) {}
+### ------------------------------------
+### p := $s0
+########################################
+
+# save state
+  addi $sp, $sp, -16          # 4 elements are pushed onto the stack
+  sw $a0, 12($sp)
+  sw $a1, 8($sp)
+  sw $a2, 4($sp)
+  sw $a3, 0($sp)
+
+# call LLT
+  move $a0, $s0
+  jal is_small_prime
+
+# restore state
+  lw $a0, 12($sp)
+  lw $a1, 8($sp)
+  lw $a2, 4($sp)
+  lw $a3, 0($sp)
+  addi $sp, $sp, 16
+
+# branching
+
+  beq $v0, $0, SCAN_NEXT    # branch if is_small_prime(p) is p
 
 ########################################
 ### printf("Testing p = %d ", p);
@@ -161,7 +189,7 @@ SCAN_LOOP:
 ########################################
 ### Bigint one  = digit_to_big(1);
 ### ------------------------------------
-### one := $s7
+### one := $s6
 ########################################
 
 # save state
@@ -186,17 +214,17 @@ SCAN_LOOP:
 
 # fill value
 
-  la $s7, x1                  # $s7 is the address of $s7
+  la $s6, x1                  # $s7 is the address of $s6
 
   li $t0, 1
-  sw $t0, 0($s7)              # sizeof("1") = 1
+  sw $t0, 0($s6)              # sizeof("1") = 1
   li $t0, 1
-  sw $t0, 4($s7)              # digitof("1",0) = 1
+  sw $t0, 4($s6)              # digitof("1",0) = 1
 
 ########################################
 ### Bigint two  = digit_to_big(2);
 ### ------------------------------------
-### two := $s6
+### two := $s5
 ########################################
 
 # save state
@@ -221,18 +249,18 @@ SCAN_LOOP:
 
 # fill value
 
-  la $s6, x2                  # $s7 is the address of $s7
+  la $s5, x2                  # $s7 is the address of $s7
 
   li $t0, 1
-  sw $t0, 0($s7)              # sizeof("2") = 1
+  sw $t0, 0($s5)              # sizeof("2") = 1
   li $t0, 2
-  sw $t0, 4($s7)              # digitof("2",0) = 2
+  sw $t0, 4($s5)              # digitof("2",0) = 2
 
 ########################################
 ### Bigint Mp = pow_big(two, p);
 ### ------------------------------------
 ### p := $s0
-### two := $s6
+### two := $s5
 ### Mp := $s1
 ########################################
 
@@ -272,7 +300,7 @@ SCAN_LOOP:
   sw $a3, 0($sp)
 
 # call pow_big
-  move $a0, $s6               # arg1: 2
+  move $a0, $s5               # arg1: 2
   move $a1, $s0               # arg2: p
   move $a2, $s1               # arg3: Mp
   jal pow_big
@@ -414,6 +442,7 @@ SCAN_EXIT:
 
 # return
   jr $ra
+
 
 LLT:
 # save state
@@ -2060,6 +2089,62 @@ MUL_end:
 # memory is updated in place, return
 MUL_return:
 # recover state
+  lw $s0, 32($sp)
+  lw $s1, 28($sp)
+  lw $s2, 24($sp)
+  lw $s3, 20($sp)
+  lw $s4, 16($sp)
+  lw $s5, 12($sp)
+  lw $s6, 8($sp)
+  lw $s7, 4($sp)
+  lw $ra, 0($sp)
+  addi $sp, $sp, 36           # 8 elements are popped from the stack
+
+# return
+  jr $ra
+
+
+is_small_prime:
+# save state
+  addi $sp, $sp, -36          # 8 elements are pushed onto the stack
+  sw $s0, 32($sp)
+  sw $s1, 28($sp)
+  sw $s2, 24($sp)
+  sw $s3, 20($sp)
+  sw $s4, 16($sp)
+  sw $s5, 12($sp)
+  sw $s6, 8($sp)
+  sw $s7, 4($sp)
+  sw $ra, 0($sp)
+
+# read parameters
+  move $s0, $a0               # $s0 = p
+
+# loop init
+  li $s7, 2                   # $s7 = i (2)
+  addi $t0, $s0, -1           # $t0 = p-1
+  slt $t9, $s7, $t0           # $t9 = $s7(i) < $t0(p-1)
+  beq $t9, $0, ISP_exit2      # branch exit_a2 if $t9 is false
+
+ISP_loop:
+  div $s0, $s7
+  mfhi $t1                    # $t1 = p%i
+  beq $t1, $0, ISP_exit1      # branch exit_a1 if $t1 is 0
+  addi $s7, $s7, 1            # ++i
+  slt $t9, $s7, $t0           # $t9 = $s7(i) < $t0(p-1)
+  beq $t9, $0, ISP_exit2      # branch exit_a2 if $t9 is false
+  j ISP_loop
+
+ISP_exit1:
+# return 0
+  li $v0, 0                   # return 0;
+  j ISP_return
+
+ISP_exit2:
+  li $v0, 1                   # return 1;
+
+ISP_return:
+  # recover state
   lw $s0, 32($sp)
   lw $s1, 28($sp)
   lw $s2, 24($sp)

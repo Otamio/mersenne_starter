@@ -21,6 +21,7 @@ newline:        .asciiz   "\n"
 ###   p   :=  $s0
 ###   i   :=  $s7
 ###   p-1 :=  $t0
+###   p%i :=  $t1
 ##########################################################
 
 is_small_prime:
@@ -104,7 +105,6 @@ ISP_return:
 ### The callee is responsible for managing saved registers
 ##########################################################
 
-# recover state
   lw $s0, 32($sp)
   lw $s1, 28($sp)
   lw $s2, 24($sp)

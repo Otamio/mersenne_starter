@@ -1,18 +1,36 @@
 # print_big.asm
-# % code segment (slight change using pointer)
-# void print_big(Bigint b) {
-# 	for (int c = b.n-1; c>=0; --c)
-# 		printf("%d", b.digits[c]);
-# 	printf("\n");
-# }
+
   .data
 newline:  .asciiz "\n"
 .align 2
 bigint1:  .space  1404
+
   .text
+
+##########################################################
+### Function: print_big
+###-------------------------------------------------------
+### % code segment
+### (1) void print_big(Bigint b) {
+### (2) 	for (int c = b.n-1; c>=0; --c)
+### (3) 		printf("%d", b.digits[c]);
+### (4) 	printf("\n");
+### (5) }
+###-------------------------------------------------------
+### % Variable Table %
+###   b   :=  $s0
+###   i   :=  $s7
+###   p-1 :=  $t0
+##########################################################
+
 print_big:
-# save state
-  addi $sp, $sp, -36          # 8 elements are pushed onto the stack
+
+##########################################################
+### Function call: save state
+### The callee is responsible for managing saved registers
+##########################################################
+
+  addi $sp, $sp, -36
   sw $s0, 32($sp)
   sw $s1, 28($sp)
   sw $s2, 24($sp)
@@ -23,10 +41,24 @@ print_big:
   sw $s7, 4($sp)
   sw $ra, 0($sp)
 
+##########################################################
+### (1) void print_big(Bigint b) {}
+###-------------------------------------------------------
+### b := $s0
+##########################################################
+
 # read parameters
   move $s0, $a0               # $s0 is the starting address of b
 
-# loop init
+##########################################################
+### (2) 	for (int c = b.n-1; c>=0; --c)
+###-------------------------------------------------------
+### p         :=  $s0
+### c         :=  $s7
+### b.digits  :=  $s6
+##########################################################
+
+# initialize the loop
   lw $s7, 0($s0)
   addi $s7, $s7, -1           # $s7 = c (b.n-1)
   addi $s6, $s0, 4            # $s6 = &b.digits[]
@@ -34,6 +66,16 @@ print_big:
 
 # loop
 BG_loop:
+
+##########################################################
+### (3) 		printf("%d", b.digits[c]);
+###-------------------------------------------------------
+### p             :=  $s0
+### c             :=  $s7
+### b.digits      :=  $s6
+### &b.digits[c]  :=  $t0
+##########################################################
+
   move $t0, $s7               # $t0 = c
   sll $t0, $t0, 2             # $t0 = 4*$s7 = 4c
   add $t0, $s6, $t0           # $t0 = &b.digits[c]
@@ -44,14 +86,22 @@ BG_loop:
   blt $s7, $0, PG_exit        # branch if c<0
   j BG_loop
 
-# end of loop (print newline)
+##########################################################
+### (4) 	printf("\n");
+##########################################################
+
 PG_exit:
   la $a0, newline             # load linefeed into $a0 for printing
   li $v0, 4                   # load print string syscall code
   syscall
 
 PG_return:
-# recover state
+
+##########################################################
+### Function call: save state
+### The callee is responsible for managing saved registers
+##########################################################
+
   lw $s0, 32($sp)
   lw $s1, 28($sp)
   lw $s2, 24($sp)
@@ -61,7 +111,11 @@ PG_return:
   lw $s6, 8($sp)
   lw $s7, 4($sp)
   lw $ra, 0($sp)
-  addi $sp, $sp, 36           # 8 elements are popped from the stack
+  addi $sp, $sp, 36
+
+##########################################################
+### Exit function
+##########################################################
 
 # return
   jr $ra

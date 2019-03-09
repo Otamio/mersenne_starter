@@ -1,7 +1,9 @@
-# shift_right.asm
+# shift_left.asm
+
+
 
   .data
-PROMPT_SR:  .asciiz   "Shift Right Test\n"
+PROMPT_SL:  .asciiz   "Shift Left Test\n"
 newline:    .asciiz   "\n"
 .align 2
 Bigint_tmp1:  .space  1404
@@ -9,15 +11,16 @@ Bigint_tmp1:  .space  1404
   .text
 
 ##########################################################
-### Function: shift_right
+### Function: shift_left
 ###-------------------------------------------------------
 ### % Code Segment %
-### (1) void shift_right(Bigint *a) {
-### (2) 	for (int i = a->n; i>0; --i)
-### (3) 		a->digits[i] = a->digits[i-1];
-### (4) 	a->digits[0] = 0;
-### (5) 	a->n += 1;
-### (6) }
+### (1) void shift_left(Bigint *a) {
+### (2) 	for (int i=0; i<a->n-1; ++i)
+### (3) 		a->digits[i] = a->digits[i+1];
+### (4) 	a->digits[a->n-1] = 0;
+### (5) 	--a->n;
+### (6) 	compress(a);
+### (7) }
 ###-------------------------------------------------------
 ### % Variable Table %
 ###   a                 := $s0
@@ -28,7 +31,7 @@ Bigint_tmp1:  .space  1404
 ###   a->n              := $s7 - 2
 ##########################################################
 
-shift_right:
+shift_left:
 
 ##########################################################
 ### Function call: save state
@@ -47,7 +50,160 @@ shift_right:
   sw $ra, 0($sp)
 
 ##########################################################
-### (1) void shift_right(Bigint *a) { }
+### (1) void shift_left(Bigint *a) { }
+###-------------------------------------------------------
+### a := $s0
+##########################################################
+
+# read parameters
+  move $s0, $a0               # $s0 is the starting address of the bigint a
+
+##########################################################
+### (2) 	for (int i=0; i<a->n-1; ++i)
+###-------------------------------------------------------
+### a                 := $s0
+### i                 := $s7
+### &(a->digits[])    := $s6
+### a->n-1            := $t9
+##########################################################
+
+# initialize the loop
+  li $s7, 0                   # $s7 = i (0)
+  lw $t9, 0($s0)
+  addi $t9, $t9, -1           # $t9 = a->n - 1
+  addi $s6, $s0, 4            # $s6 = &(a->digits[]), starting address of array
+  bge $s7, $t9, SL_exit       # branch if i >= a->n-1
+
+SL_loop:
+
+##########################################################
+### (3) 		a->digits[i] = a->digits[i+1];
+###-------------------------------------------------------
+### a                 := $s0
+### i                 := $s7
+### &(a->digits[])    := $s6
+### &a.digits[i]      := $t0
+### a->digits[i+1]    := $t1
+##########################################################
+
+  move $t0, $s7               # $t0 = i
+  sll $t0, $t0, 2             # $t0 = 4*$s7 = 4i
+  add $t0, $s6, $t0           # $t0 = &a.digits[i]
+  lw $t1, 4($t0)              # load a->digits[i+1] into $t1
+  sw $t1, 0($t0)              # a->digits[i] = a->digits[i+1]
+
+##########################################################
+### (2) 	for (int i=0; i<a->n-1; ++i)
+###-------------------------------------------------------
+### a                 := $s0
+### i                 := $s7
+### &(a->digits[])    := $s6
+### a->n-1            := $t9
+##########################################################
+
+  addi $s7, $s7, 1            # ++i;
+  bge $s7, $t9, SL_exit       # branch if i >= a->n-1
+  j SL_loop
+
+SL_exit:
+
+##########################################################
+### (4) 	a->digits[a->n-1] = 0;
+### (5) 	--a->n;
+###-------------------------------------------------------
+### a                 := $s0
+### i                 := $s7
+### &(a->digits[])    := $s6
+### a->n              := $s5
+### &a.digits[i]      := $t0
+### a->digits[i+1]    := $t1
+##########################################################
+
+  move $t0, $t9               # $t0 = a->n - 1
+  sll $t0, $t0, 2             # $t0 * 4
+  add $t0, $s6, $t0           # $t0 = &a->digits[a->n-1]
+  sw $0, 0($t0)               # a->digits[a->n-1] = 0；
+  lw $s5, 0($s0)              # $s5 = a->n;
+  addi $s5, $s5, -1           # $s5 -= 1;
+  sw $s5, 0($s0)              # a->n = $s5 (a->n -= 1);
+
+##########################################################
+### (6) 	compress(a);
+###-------------------------------------------------------
+### a                 := $s0
+##########################################################
+
+  move $a0, $s0               # fill arguments
+  jal compress                # call compress
+
+SL_return:
+
+##########################################################
+### Function call: save state
+### The callee is responsible for managing saved registers
+##########################################################
+
+  lw $s0, 32($sp)
+  lw $s1, 28($sp)
+  lw $s2, 24($sp)
+  lw $s3, 20($sp)
+  lw $s4, 16($sp)
+  lw $s5, 12($sp)
+  lw $s6, 8($sp)
+  lw $s7, 4($sp)
+  lw $ra, 0($sp)
+  addi $sp, $sp, 36
+
+##########################################################
+### Exit function
+##########################################################
+
+  jr $ra
+
+
+##########################################################
+### Function: compress
+###-------------------------------------------------------
+### % Code Segment %
+### (1) void compress(Bigint *a) {
+### (2)   for (int i = a->n - 1; i > 0; --i) {
+### (3)     if (a->digits[i] == 0)
+### (4)       continue;
+### (5)     else {
+### (6)       a->n = i+1;
+### (7)       return;
+### (8)     }
+### (9) 	}
+### (10) }
+###-------------------------------------------------------
+### % Variable Table %
+###   p                :=   $s0
+###   i                :=   $s7
+###   a->digits        :=   $s6
+###   &(a->digits[i])  :=   $t0
+###   a->digits[i]     :=   $t1
+##########################################################
+
+compress:
+
+##########################################################
+### Function call: save state
+### The callee is responsible for managing saved registers
+##########################################################
+
+  addi $sp, $sp, -36
+  sw $s0, 32($sp)
+  sw $s1, 28($sp)
+  sw $s2, 24($sp)
+  sw $s3, 20($sp)
+  sw $s4, 16($sp)
+  sw $s5, 12($sp)
+  sw $s6, 8($sp)
+  sw $s7, 4($sp)
+  sw $ra, 0($sp)
+
+##########################################################
+### (1) void compress(Bigint *a) {
 ###-------------------------------------------------------
 ### a := $s0
 ##########################################################
@@ -56,68 +212,61 @@ shift_right:
   move $s0, $a0               # $s0 is the starting address of a
 
 ##########################################################
-### (2) 	for (int i = a->n; i>0; --i)
+### (2)   for (int i = a->n - 1; i > 0; --i) {
 ###-------------------------------------------------------
-### a                 := $s0
-### i                 := $s7
-### &(a->digits[])    := $s6
+### p   :=  $s0
+### i   :=  $s7
 ##########################################################
 
 # initialize the loop
-  lw $s7, 0($s0)              # $s7 = i (a->n)
+  lw $s7, 0($s0)
+  addi $s7, $s7, -1           # $s7 = i (a->n-1)
   addi $s6, $s0, 4            # $s6 = &(a->digits[])
-  ble $s7, $0, SR_exit        # branch if i<=0
+  ble $s7, $0, CPS_exit       # branch if i<=0
 
-SR_loop:
+CPS_loop:
 
 ##########################################################
-### (3) 		a->digits[i] = a->digits[i-1];
+### (3)     if (a->digits[i] == 0)
 ###-------------------------------------------------------
-### a                 := $s0
-### i                 := $s7
-### &(a->digits[])    := $s6
-### &a.digits[i]      := $t0
-### a->digits[i-1]    := $t1
+### p                :=   $s0
+### i                :=   $s7
+### a->digits        :=   $s6
+### &(a->digits[i])  :=   $t0
+### a->digits[i]     :=   $t1
 ##########################################################
 
   move $t0, $s7               # $t0 = i
   sll $t0, $t0, 2             # $t0 = 4*$s7 = 4i
-  add $t0, $s6, $t0           # $t0 = &a.digits[i]
-  lw $t1, -4($t0)             # load a->digits[i-1] into $t1
-  sw $t1, 0($t0)              # a->digits[i] = a->digits[i-1]
+  add $t0, $s6, $t0           # $t0 = &a->digits[i]
+  lw $t1, 0($t0)              # load a->digits[i] into $t1
+  bne $t1, $0, CPS_exit       # branch if (a->digits[i] != 0)
 
 ##########################################################
-### (2) 	for (int i = a->n; i>0; --i)
+### (2)   for (int i = a->n - 1; i > 0; --i) {
+###
+### (4)       continue;
 ###-------------------------------------------------------
-### i                 := $s7
+### i   :=  $s7
 ##########################################################
 
   addi $s7, $s7, -1           # --i;
-  ble $s7, $0, SR_exit        # branch if i<=0
-  j SR_loop
+  ble $s7, $0, CPS_exit       # branch if i<=0
+  j CPS_loop
 
-SR_exit:
+CPS_exit:
 
 ##########################################################
-### (4) 	a->digits[0] = 0;
+### (6)       a->n = i+1;
+### (7)       return;
 ###-------------------------------------------------------
-### a := $s0
+### i   :=  $s7
 ##########################################################
 
-  sw $0, 4($s0)              # a->digits[0] = 0;
+  addi $s5, $s7, 1            # new size should be i+1 (since i is the index)
+  sw $s5, 0($s0)              # update the new value to the memory address
 
-##########################################################
-### (5) 	a->n += 1;
-###-------------------------------------------------------
-### a := $s0
-### a->n := $s7
-##########################################################
-
-  lw $s7, 0($s0)             # $s7 = a->n;
-  addi $s7, $s7, 1           # $s7 += 1;
-  sw $s7, 0($s0)             # a->n = $s7 (a->n+=1);
-
-SR_return:
+CPS_return:
 
 ##########################################################
 ### Function call: save state
@@ -332,15 +481,15 @@ init_exit:
 main:
 
 ##########################################################
-### Print "Shift Right Test\n"
+### Print "Shift Left Test\n"
 ##########################################################
 
-  la $a0, PROMPT_SR
+  la $a0, PROMPT_SL
   li $v0, 4
   syscall
 
 ##########################################################
-### Tests shift_right(3) three times, exptects 3000
+### Tests shift left(7000) two times, exptects 70
 ##########################################################
 
 # init bigint
@@ -348,16 +497,15 @@ main:
   jal init_bigint
 
 # load bigint
-  li $t1, 1
-  sw $t1, 0($a0)           # Bigint size is 1
+  li $t1, 4
+  sw $t1, 0($a0)           # Bigint size is 4
 
-  li $t1, 3
-  sw $t1, 4($a0)           # the digit is 3
+  li $t1, 7
+  sw $t1, 16($a0)          # first digit is 7 (no need to change since other bits are already 0)
 
-# call shift_right 3 times
-  jal shift_right
-  jal shift_right
-  jal shift_right
+# call shift_left 2 times
+  jal shift_left
+  jal shift_left
 
 # call print_big
   jal print_big

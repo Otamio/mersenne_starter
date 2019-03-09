@@ -1,4 +1,5 @@
 # shift_right.asm
+
 # void shift_right(Bigint *a) {
 # 	// Copy stuff
 # 	for (int i = a->n; i>0; --i)
@@ -10,10 +11,10 @@
 # }
 
   .data
-test_d:  .asciiz "Shift Right Test"
-newline: .asciiz "\n"
+PROMPT_SR:  .asciiz   "Shift Right Test\n"
+newline:    .asciiz   "\n"
 .align 2
-bigint1:  .space  1404
+Bigint_tmp1:  .space  1404
 
   .text
 shift_right:

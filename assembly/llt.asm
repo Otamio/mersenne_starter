@@ -584,7 +584,7 @@ LLT_loop_exit:
 
 # call compare_big
   move $a0, $s2
-  move $a1, $s5
+  move $a1, $s7
   jal compare_big
 
 # restore state
@@ -613,7 +613,7 @@ LLT_loop_exit:
 ########################################
 
 LLT_IF_1:
-  li $v1, 1
+  li $v0, 1
   j LLT_RET
 
 LLT_RET:
@@ -1752,7 +1752,7 @@ main:
 
   # test case 2 (67)
 
-  li $a0, 5
+  li $a0, 61
   jal LLT
 
   # get return value and print

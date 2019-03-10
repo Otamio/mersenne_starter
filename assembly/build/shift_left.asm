@@ -1,7 +1,5 @@
 # shift_left.asm
 
-
-
   .data
 PROMPT_SL:  .asciiz   "Shift Left Test\n"
 newline:    .asciiz   "\n"

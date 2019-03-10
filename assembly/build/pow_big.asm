@@ -1,16 +1,396 @@
-# mult_big.asm
+# pow_big.asm
 
   .data
-PROMPT_MUL:   .asciiz   "Multiplication Tests\n"
-newline:      .asciiz   "\n"
+PROMPT_POW:   .asciiz "Power Tests\n"
+newline:      .asciiz "\n"
 .align 2
 Bigint_tmp1:  .space  1404
 .align 2
 Bigint_tmp2:  .space  1404
 .align 2
 Bigint_tmp3:  .space  1404
+.align 2
+Tmp_pow:      .space  1404
 
   .text
+
+##########################################################
+### Function: pow_big
+###-------------------------------------------------------
+### % Code Segment %
+### (1)  Bigint pow_big(Bigint a, int p) {
+### (2)  	Bigint b = a;
+### (3)  	for (int i = 1; i < p; ++i)
+### (4)  		b = mult_big(b, a);
+### (5)  	return b;
+### (6) }
+###-------------------------------------------------------
+### % Variable Table %
+###   a       := $s0
+###   p       := $s1
+###   b       := $s2
+###   i       := $s7
+###   Tmp_pow := $t9
+###-------------------------------------------------------
+### Since we cannot pow bigint in place, a temporary bigint
+###   must be allocated to the function, which we call b
+### That is, b is a pointer to an empty bigint
+##########################################################
+
+pow_big:
+
+##########################################################
+### Function call: save state
+### The callee is responsible for managing saved registers
+##########################################################
+
+  addi $sp, $sp, -36
+  sw $s0, 32($sp)
+  sw $s1, 28($sp)
+  sw $s2, 24($sp)
+  sw $s3, 20($sp)
+  sw $s4, 16($sp)
+  sw $s5, 12($sp)
+  sw $s6, 8($sp)
+  sw $s7, 4($sp)
+  sw $ra, 0($sp)
+
+##########################################################
+### (1)  Bigint pow_big(Bigint a, int p) {
+###-------------------------------------------------------
+###   a := $s0
+###   p := $s1
+###   b := $s2, b is an empty bigint
+##########################################################
+
+# read parameters
+  move $s0, $a0               # $s0 is the starting address of a
+  move $s1, $a1               # $s1 is integer p
+  move $s2, $a2               # $s2 is the starting address of b
+
+##########################################################
+### (2)  	Bigint b = a;
+###-------------------------------------------------------
+###   a := $s0
+###   b := $s2
+##########################################################
+
+#**#######################################################
+#** Function call: save state
+#** The caller is responsible for managing arguments
+#**   and temporary registers
+#**#######################################################
+
+  addi $sp, $sp, -16
+  sw $a0, 12($sp)
+  sw $a1, 8($sp)
+  sw $a2, 4($sp)
+  sw $a3, 0($sp)
+
+#**#######################################################
+#** Function call: call copy_bigint
+#**#######################################################
+
+  move $a0, $s0
+  move $a1, $s2
+  jal copy_bigint
+
+#**#######################################################
+#** Function call: restore state
+#** The caller is responsible for managing arguments
+#**   and temporary registers
+#**#######################################################
+
+  lw $a0, 12($sp)
+  lw $a1, 8($sp)
+  lw $a2, 4($sp)
+  lw $a3, 0($sp)
+  addi $sp, $sp, 16
+
+##########################################################
+### Initialize temporary variable in pow_big (Tmp_pow)
+###-------------------------------------------------------
+###   Tmp_pow := $t9
+##########################################################
+
+#**#######################################################
+#** Function call: save state
+#** The caller is responsible for managing arguments
+#**   and temporary registers
+#**#######################################################
+
+  addi $sp, $sp, -16          # 4 elements are pushed onto the stack
+  sw $a0, 12($sp)
+  sw $a1, 8($sp)
+  sw $a2, 4($sp)
+  sw $a3, 0($sp)
+
+#**#######################################################
+#** Function call: call init_bigint
+#**#######################################################
+
+  la $t9, Tmp_pow
+  move $a0, $t9
+  jal init_bigint
+
+#**#######################################################
+#** Function call: restore state
+#** The caller is responsible for managing arguments
+#**   and temporary registers
+#**#######################################################
+
+  lw $a0, 12($sp)
+  lw $a1, 8($sp)
+  lw $a2, 4($sp)
+  lw $a3, 0($sp)
+  addi $sp, $sp, 16
+
+##########################################################
+### (3)  	for (int i = 1; i < p; ++i)
+###-------------------------------------------------------
+###   p := $s1
+###   i := $s7
+##########################################################
+
+# prepare for loop
+  li $s7, 1                   # $s7 = 1 (i)
+
+POW_loop:
+  bge $s7, $s1, POW_return    # branch to exit if i >= p
+
+##########################################################
+### (4)  		b = mult_big(b, a);
+###-------------------------------------------------------
+###   a       := $s0
+###   p       := $s1
+###   b       := $s2
+###   i       := $s7
+###   Tmp_pow := $t9
+##########################################################
+
+#**#######################################################
+#** Function call: save state
+#** The caller is responsible for managing arguments
+#**   and temporary registers
+#**#######################################################
+
+  addi $sp, $sp, -20
+  sw $a0, 16($sp)
+  sw $a1, 12($sp)
+  sw $a2, 8($sp)
+  sw $a3, 4($sp)
+  sw $t9, 0($sp)
+
+#**#######################################################
+#** Function call: call mult_big
+#**#######################################################
+
+  move $a0, $s0
+  move $a1, $s2
+  move $a2, $t9               # $t9 gets reinitialized in this call (no worry of garbage)
+  jal mult_big
+
+#**#######################################################
+#** Function call: restore state
+#** The caller is responsible for managing arguments
+#**   and temporary registers
+#**#######################################################
+
+  lw $a0, 16($sp)
+  lw $a1, 12($sp)
+  lw $a2, 8($sp)
+  lw $a3, 4($sp)
+  lw $t9, 0($sp)
+  addi $sp, $sp, 20
+
+##########################################################
+### copy $t9 back to b
+##########################################################
+
+#**#######################################################
+#** Function call: save state
+#** The caller is responsible for managing arguments
+#**   and temporary registers
+#**#######################################################
+
+  addi $sp, $sp, -20
+  sw $a0, 16($sp)
+  sw $a1, 12($sp)
+  sw $a2, 8($sp)
+  sw $a3, 4($sp)
+  sw $t9, 0($sp)
+
+#**#######################################################
+#** Function call: call copy_bigint
+#**#######################################################
+
+  move $a0, $t9
+  move $a1, $s2
+  jal copy_bigint
+
+#**#######################################################
+#** Function call: save state
+#** The caller is responsible for managing arguments
+#**   and temporary registers
+#**#######################################################
+
+  lw $a0, 16($sp)
+  lw $a1, 12($sp)
+  lw $a2, 8($sp)
+  lw $a3, 4($sp)
+  lw $t9, 0($sp)
+  addi $sp, $sp, 20
+
+##########################################################
+### (3)  	for (int i = 1; i < p; ++i)
+###-------------------------------------------------------
+###   i := $s7
+##########################################################
+
+  addi $s7, $s7, 1           # increment i
+  j POW_loop
+
+POW_return:
+
+##########################################################
+### (5)  	return b;
+###-------------------------------------------------------
+###   i := $s7
+##########################################################
+
+  move $v0, $s2
+
+##########################################################
+### Function call: save state
+### The callee is responsible for managing saved registers
+##########################################################
+
+  lw $s0, 32($sp)
+  lw $s1, 28($sp)
+  lw $s2, 24($sp)
+  lw $s3, 20($sp)
+  lw $s4, 16($sp)
+  lw $s5, 12($sp)
+  lw $s6, 8($sp)
+  lw $s7, 4($sp)
+  lw $ra, 0($sp)
+  addi $sp, $sp, 36
+
+##########################################################
+### Exit function
+##########################################################
+
+  jr $ra
+
+
+##########################################################
+### Function: copy_bigint
+###-------------------------------------------------------
+### % Code Segment %
+### (1) copy_bigint(Bigint *a, Bigint *b) {
+### (2)   for (x=a, y=b; x<=350+a; ++x, ++y)
+### (3)     *y = *x
+### (4) }
+###-------------------------------------------------------
+### % Variable Table %
+###   a             := $s0
+###   b             := $s1
+###   c             := $s2, c is an empty bigint
+###   &(a.digits[]) := $s3
+###   &(b.digits[]) := $s4
+###   &(c.digits[]) := $s5
+###   j             := $s6
+###   i             := $s7
+###   a.n           := $t0
+###   b.n           := $t1
+###   c.n           := $t2
+###   carry         := $t3
+###   val           := $t8
+###   a.n+i         := $t9
+##########################################################
+
+copy_bigint:
+
+##########################################################
+### Function call: save state
+### The callee is responsible for managing saved registers
+##########################################################
+
+  addi $sp, $sp, -36
+  sw $s0, 32($sp)
+  sw $s1, 28($sp)
+  sw $s2, 24($sp)
+  sw $s3, 20($sp)
+  sw $s4, 16($sp)
+  sw $s5, 12($sp)
+  sw $s6, 8($sp)
+  sw $s7, 4($sp)
+  sw $ra, 0($sp)
+
+##########################################################
+### (1) copy_bigint(Bigint *a, Bigint *b) {
+### (2)   for (x=a, y=b; x<=350+a; ++x, ++y)
+###-------------------------------------------------------
+###   x       :=  $s0
+###   x+350   :=  $s1
+###   y       :=  $s2
+##########################################################
+
+# Initialize Loop
+  move $s0, $a0                 # s0 is the starting address of a
+  addi $s1, $s0, 1400           # s1 is the (word) address of the last element
+  move $s2, $a1                 # s2 is the starting address of b
+
+copy_loop:
+  bgt $s0, $s1, copy_exit       # if $s0 > $s1, branch to exit
+
+##########################################################
+### (3)     *y = *x
+###-------------------------------------------------------
+###   x       :=  $s0
+###   y       :=  $s2
+###   a[i]    :=  $s7
+##########################################################
+
+  lw $s7, 0($s0)                # load a[i]
+  sw $s7, 0($s2)                # save a[i]
+
+##########################################################
+### (2)   for (x=a, y=b; x<=350+a; ++x, ++y)
+###-------------------------------------------------------
+###   x       :=  $s0
+###   y       :=  $s2
+##########################################################
+
+  addi $s0, $s0, 4
+  addi $s2, $s2, 4
+  j copy_loop
+
+copy_exit:
+
+##########################################################
+### Function call: save state
+### The callee is responsible for managing saved registers
+##########################################################
+
+  lw $s0, 32($sp)
+  lw $s1, 28($sp)
+  lw $s2, 24($sp)
+  lw $s3, 20($sp)
+  lw $s4, 16($sp)
+  lw $s5, 12($sp)
+  lw $s6, 8($sp)
+  lw $s7, 4($sp)
+  lw $ra, 0($sp)
+  addi $sp, $sp, 36
+
+##########################################################
+### Exit function
+##########################################################
+
+  jr $ra
+
+
 
 ##########################################################
 ### Function: mult_big
@@ -241,14 +621,14 @@ MUL_loop_in:
 
   add $t8, $t8, $t3           # $t8 = b.digits[i] * a.digits[j-i] + c.digits[j] + carry
 
-  ##########################################################
-  ### (12)  			carry       = val / 10;
-  ###-------------------------------------------------------
-  ###   carry         := $t3
-  ###   &(c.digits[j]):= $t4
-  ###   val           := $t8
-  ###   a.n+i         := $t9
-  ##########################################################
+##########################################################
+### (12)  			carry       = val / 10;
+###-------------------------------------------------------
+###   carry         := $t3
+###   &(c.digits[j]):= $t4
+###   val           := $t8
+###   a.n+i         := $t9
+##########################################################
 
 # val div (mod) 10
   li $t5, 10                  # $t5 = 10
@@ -747,147 +1127,68 @@ init_exit:
 main:
 
 ##########################################################
-### Print "Multiplication Tests\n"
+### Print "Power Tests\n"
 ##########################################################
 
-  la $a0, PROMPT_MUL
+  la $a0, PROMPT_POW
   li $v0, 4
-	syscall
+  syscall
 
 ##########################################################
-### Test case 1, 3 and 7, expects 21
-##########################################################
-
-# init bigint1
-  la $a0, Bigint_tmp1        # $a0 is the starting address of Bigint_tmp1
-  jal init_bigint            # initialize bigint 1
-
-# load bigint1
-  li $t1, 1
-  sw $t1, 0($a0)            # Bigint size is 1
-
-  li $t1, 3
-  sw $t1, 4($a0)            # the digit is 3
-
-# init bigint 2
-  la $a0, Bigint_tmp2       # $a0 is the starting address of Bigint_tmp2
-  jal init_bigint           # initialize bigint2
-
-# load bigint2
-  li $t1, 1
-  sw $t1, 0($a0)            # Bigint size is 1
-
-  li $t1, 7
-  sw $t1, 4($a0)            # the digit is 7
-
-# call mult_big
-  la $a0, Bigint_tmp1
-  la $a1, Bigint_tmp2
-  la $a2, Bigint_tmp3
-  jal mult_big
-
-# print output
-  move $a0, $v0
-  jal print_big
-
-##########################################################
-### Test case 2, 30 and 42, expects 1260
+### Test case 1, 3 and 4, expects 81
 ##########################################################
 
 # init bigint1
   la $a0, Bigint_tmp1            # $a0 is the starting address of Bigint_tmp1
   jal init_bigint                # initialize Bigint_tmp1
 
-# load bigint1
-  li $t1, 2
-  sw $t1, 0($a0)            # Bigint size is 2
+# load bigint
+  li $t1, 1
+  sw $t1, 0($a0)            # Bigint size is 1
 
   li $t1, 3
-  sw $t1, 8($a0)            # first digit is 3
-  li $t1, 0
-  sw $t1, 4($a0)            # second digit is 0
+  sw $t1, 4($a0)            # the digit is 3
 
 # init bigint2
-  la $a0, Bigint_tmp2           # $a0 is the starting address of Bigint_tmp2
-  jal init_bigint               # initialize Bigint_tmp2
+  la $a0, Bigint_tmp2            # $a0 is the starting address of Bigint_tmp2
+  jal init_bigint            # initialize bigint 1
 
-# load bigint2
-  li $t1, 2
-  sw $t1, 0($a0)            # Bigint size is 2
-
-  li $t1, 4
-  sw $t1, 8($a0)            # first digit is 4
-  li $t1, 2
-  sw $t1, 4($a0)            # second digit is 2
-
-# call mult_big
+# call pow_big
   la $a0, Bigint_tmp1
-  la $a1, Bigint_tmp2
-  la $a2, Bigint_tmp3
-  jal mult_big
+  li $a1, 4
+  la $a2, Bigint_tmp2
+  jal pow_big
 
 # print output
   move $a0, $v0
   jal print_big
 
 ##########################################################
-### Test case 3, 10000000 and 9000000, expects 90000000000000
+### Test case 2, 42 and 42, expects 150130937545296572356771972164254457814047970568738777235893533016064
 ##########################################################
 
-# test case 3 (10,000,000 and 9,000,000)
 # init bigint1
-  la $a0, Bigint_tmp1            # $a0 is the starting address of Bigint_tmp1
+  la $a0, Bigint_tmp1           # $a0 is the starting address of Bigint_tmp1
+  jal init_bigint               # initialize Bigint_tmp1
+
+# load bigint
+  li $t1, 2
+  sw $t1, 0($a0)            # Bigint size is 1
+
+  li $t1, 4
+  sw $t1, 8($a0)            # first digit is 4
+  li $t1, 2
+  sw $t1, 4($a0)            # second digit is 2
+
+# init bigint2
+  la $a0, Bigint_tmp2            # $a0 is the starting address of Bigint_tmp2
   jal init_bigint                # initialize Bigint_tmp2
 
-# load bigint1
-  li $t1, 8
-  sw $t1, 0($a0)            # Bigint size is 8
-
-  li $t1, 1
-  sw $t1, 32($a0)           # first digit is 1
-  li $t1, 0
-  sw $t1, 28($a0)           # second digit is 0
-  li $t1, 0
-  sw $t1, 24($a0)           # 3rd digit is 0
-  li $t1, 0
-  sw $t1, 20($a0)           # 4th digit is 0
-  li $t1, 0
-  sw $t1, 16($a0)           # 5th digit is 0
-  li $t1, 0
-  sw $t1, 12($a0)           # 6th digit is 0
-  li $t1, 0
-  sw $t1, 8($a0)            # 7th digit is 0
-  li $t1, 0
-  sw $t1, 4($a0)            # 8th digit is 0
-
-# init bigint 2
-  la $a0, Bigint_tmp2           # $a0 is the starting address of Bigint_tmp2
-  jal init_bigint               # initialize Bigint_tmp2
-
-# load bigint 2
-  li $t1, 7
-  sw $t1, 0($a0)            # Bigint size is 7
-
-  li $t1, 9
-  sw $t1, 28($a0)           # first digit is 0
-  li $t1, 0
-  sw $t1, 24($a0)           # second digit is 0
-  li $t1, 0
-  sw $t1, 20($a0)           # 3rd digit is 0
-  li $t1, 0
-  sw $t1, 16($a0)           # 4th digit is 0
-  li $t1, 0
-  sw $t1, 12($a0)           # 5th digit is 0
-  li $t1, 0
-  sw $t1, 8($a0)            # 6th digit is 0
-  li $t1, 0
-  sw $t1, 4($a0)            # 7th digit is 0
-
-# call mult_big
+# call pow_big
   la $a0, Bigint_tmp1
-  la $a1, Bigint_tmp2
-  la $a2, Bigint_tmp3
-  jal mult_big
+  li $a1, 42
+  la $a2, Bigint_tmp2
+  jal pow_big
 
 # print output
   move $a0, $v0

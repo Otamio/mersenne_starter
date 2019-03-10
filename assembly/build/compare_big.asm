@@ -1,19 +1,5 @@
 # compare_big.asm
 
-### (1)   int compare_big(Bigint a, Bigint b) {
-### (2)     if (a.n < b.n)
-### (3)    		return -1;
-### (4)   	if (a.n > b.n)
-### (5)   		return 1;
-### (6)    	for (int i = a.n-1; i>=0; --i) {
-### (7)   		if (a.digits[i] > b.digits[i])
-### (8)   			return 1;
-### (9)    		else if (a.digits[i] < b.digits[i])
-### (10)   			return -1;
-### (11)   	}
-### (12)   	return 0;
-### (13)  }
-
   .data
 PROMPT_CMP:  .asciiz    "Comparison Tests\n"
 newline:     .asciiz    "\n"

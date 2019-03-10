@@ -29,7 +29,6 @@ LLT_Mp2:  .space 1404
 LLT_tmp:  .space 1404
 
   .text
-  la $s4, LLT_Mp           # store a copy of Mp
 
 ##########################################################
 ### Function: LLT
@@ -3324,7 +3323,10 @@ copy_exit:
 #################################
 main:
 
-# print test notification
+##########################################################
+### prints "LLT Tests\n"
+##########################################################
+
   la $a0, PROMPT_LLT
   li $v0, 4
   syscall

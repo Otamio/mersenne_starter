@@ -147,88 +147,11 @@ Bigint sub_big(Bigint a, Bigint b)
 		}
 	}
 
-
 	// Trim any leading zeros
 	compress(&c);
 
 	return c;
 }
-
-// Bigint sub_big(Bigint a, Bigint b){
-//
-//     // create struct c
-//     Bigint c;
-//
-//     c.n = a.n;
-//
-//     // Initialize all digits in c to zero
-//     for( int i = 0; i < c.n; i++ )
-//         c.digits[i] = 0;
-//
-//     // perform basic subtraction, with some more efficient indexing
-//     for( int i = 0; i < a.n; i++ ){
-//
-//         int carry = 0;
-//
-// 				if (i >= b.n)
-// 					b.digits[i] = 0;
-//
-//         //if a digit is less that b digit, we need to carry from next number
-//         if (a.digits[i] <  b.digits[i]){
-//
-// 					carry = 10;
-//
-//             if (i != (a.n - 1)){
-//               a.digits[i+1] -= 1;
-//             }
-//         }
-//
-//         //if the next number is not the end of the range, we decrement.
-//         c.digits[i] = (a.digits[i] - b.digits[i]) + (carry);
-//
-// 				// printf("i: %d, %d %d %d\n", i, a.digits[i], b.digits[i], c.digits[i]);
-//
-//     }
-//
-//     compress(&c);
-//     return c;
-// }
-
-// Bigint sub_big(Bigint a, Bigint b){
-//
-//     // create struct c
-//     Bigint c;
-//
-//     c.n = a.n;
-//
-//     // Initialize all digits in c to zero
-//     for( int i = 0; i < c.n; i++ )
-//         c.digits[i] = 0;
-//
-//     // perform basic subtraction, with some more efficient indexing
-//     for( int i = 0; i < a.n; i++ ){
-//
-//         int carry = 0;
-//
-// 				if (i>=b.n)
-// 					b.digits[i] = 0;
-//
-//
-//         //if a digit is less that b digit, we need to carry from next number
-//         if (a.digits[i] <  b.digits[i]){
-//
-//             carry = 10;
-//
-//             if (i != (a.n - 1)){
-//                 a.digits[i+1] -= 1;
-//             }
-//         }
-//         //if the next number is not the end of the range, we decrement.
-//         c.digits[i] = (a.digits[i] - b.digits[i]) + (carry);
-//     }
-//     compress(&c);
-//     return c;
-// }
 
 // Computes b = a^p
 // Works by multiplying 'a' by itself p-1 times
@@ -367,21 +290,12 @@ int LLT(int p) {
 	// s = 4
 	Bigint s = digit_to_big(4);
 
-	// printf("Test start\n");
-	// print_big(Mp);
-	// printf("Starts\n");
-
 	for (int i = 0; i < p - 2; ++i) {
 		// s = ((s × s) − 2) mod Mp
 		s = mult_big(s, s);
-		// print_big(s);
 		s = sub_big(s, two);
-		// print_big(s);
 		s = mod_big(s, Mp);
-		// print_big(s);
 	}
-
-	// printf("Test ends\n");
 
 	if (compare_big(s, zero) == 0) // check if s == 0
 		return 1; // PRIME
@@ -423,11 +337,6 @@ void Test_mult_big(int a, int b) {
 
 // Test the function sub_big
 void Test_sub_big(int a, int b) {
-	// printf("%d-%d=%d\n", a, b, a-b);
-	// Bigint big_a = digit_to_big(a);
-	// Bigint big_b = digit_to_big(b);
-	// Bigint big_c = sub_big(big_a, big_b);
-	// print_big(big_c);
 	Bigint two = digit_to_big(2);
 	Bigint five = digit_to_big(5);
 	Bigint ten = mult_big(two, five);
@@ -455,7 +364,6 @@ void Test_pow_big(int a, int p) {
 	Bigint big_b = pow_big(big_a, p);
 	print_big(big_b);
 }
-
 
 // my compare function
 int my_compare(int a, int b) {
@@ -504,14 +412,11 @@ void Test_mod_big() {
 	print_big(mod_a);
 }
 
-
-
-
 // Scan through to p = 550, checking for prime Mp's along the way
 int main(void) {
-	// Test all p values, 2 to 550
+	// Test all p values, 3 to 550
 
-	for (int p = 3; p <= 128; ++p) {
+	for (int p = 3; p <= 550; ++p) {
 		// Only test Mp for primacy if p itself is also prime
 		if (is_small_prime(p)) {
 			printf("Testing p = %d ", p);
@@ -534,8 +439,6 @@ int main(void) {
 
 		}
 	}
-
-	// Test_sub_big(100,11);
 
 	return 0;
 }

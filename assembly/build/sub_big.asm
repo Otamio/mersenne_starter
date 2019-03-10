@@ -744,7 +744,7 @@ PG_return:
 main:
 
 ##########################################################
-### Print "Multiplication Tests\n"
+### Print "Subtraction Tests\n"
 ##########################################################
 
   la $a0, PROMPT_SUB

@@ -1,33 +1,59 @@
 # mod_big.asm
-# Bigint mod_big(Bigint a, Bigint b) {
-# 	Bigint original_b = b;
-# 	while (compare_big(a, b) == 1)
-# 		shift_right(&b);
-# 	shift_left(&b);
-# 	while (compare_big(b,original_b) != -1)
-# 	{
-# 		while (compare_big(a,b) != -1)
-# 			a = sub_big(a,b);
-# 		shift_left(&b);
-# 	}
-# 	return a;
-# }
+
+
+
   .data
-test_j:   .asciiz "Modulus Tests"
-newline:  .asciiz "\n"
+PROMPT_MOD:   .asciiz   "Modulus Tests"
+newline:      .asciiz   "\n"
 .align 2
-bigint1:  .space  1404
+Bigint_tmp1:  .space  1404
 .align 2
-bigint2:  .space  1404
+Bigint_tmp2:  .space  1404
 .align 2
-bigint3:  .space  1404
+Bigint_tmp3:  .space  1404
 .align 2
-bigint8:  .space  1404
+Mod_tmp:      .space  1404
 
   .text
+
+##########################################################
+### Function: mod_big
+###-------------------------------------------------------
+### % Code Segment %
+### (1)    Bigint mod_big(Bigint a, Bigint b) {
+### (2)    	Bigint original_b = b;
+### (3)    	while (compare_big(a, b) == 1)
+### (4)    		shift_right(&b);
+### (5)   	shift_left(&b);
+### (6)    	while (compare_big(b,original_b) != -1)
+### (7)    	{
+### (8) 		  while (compare_big(a,b) != -1)
+### (9)    			a = sub_big(a,b);
+### (10)   		shift_left(&b);
+### (11)   	}
+### (12)  	return a;
+### (13)  }
+###-------------------------------------------------------
+### % Variable Table %
+###   a       := $s0
+###   p       := $s1
+###   b       := $s2
+###   i       := $s7
+###   Tmp_pow := $t9
+###-------------------------------------------------------
+### Since we cannot pow bigint in place, a temporary bigint
+###   must be allocated to the function, which we call c
+### That is, c is a pointer to an empty bigint
+##########################################################
+
 mod_big:
-# save state
-  addi $sp, $sp, -36          # 8 elements are pushed onto the stack
+
+##########################################################
+### Function call: save state
+### The callee is responsible for managing saved registers
+##########################################################
+
+  addi $sp, $sp, -36
   sw $s0, 32($sp)
   sw $s1, 28($sp)
   sw $s2, 24($sp)
@@ -37,6 +63,7 @@ mod_big:
   sw $s6, 8($sp)
   sw $s7, 4($sp)
   sw $ra, 0($sp)
+
 
 # read parameters
   move $s0, $a0               # $s0 is the starting address of a
